@@ -8,6 +8,8 @@ from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
+#This is a thing I'm adding to make a commit
+
 Base = declarative_base()
 
 engine = db.create_engine('sqlite:///buy_sell_database.sql')
