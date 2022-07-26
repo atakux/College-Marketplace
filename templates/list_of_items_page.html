@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>College Marketplace</title>
+    <style>
+        * {
+            font-family: "Poppins", sans-serif;
+        }
+
+        body {
+            display: flex;
+            max-width: 2000px;
+            margin: auto;
+            padding-top: 60px;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: space-evenly;
+        }
+
+        div {
+            border: 1.5px solid #a3a3a3;
+            padding: 30px;
+            margin: 20px;
+            width: 500px;
+        }
+    </style>
+</head>
+<body> 
+    {% for actual_item in item_list %}
+        <div>
+            <img src="{{ url_for('static', filename='images/' + actual_item['item_id']|string + '.png') }}" class="center">
+            <h1><a href="/item/{{actual_item['item_id']}}">{{ actual_item['item_name'] }}</a> </h1>
+            <h2>Price: {{ actual_item['item_price'] }}</h2>
+        </div>
+    {% endfor %}
+</body>
+</html>
+

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>College Marketplace</title>
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap");
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            font-family: "Poppins", sans-serif;
+        }
+
+        .container {
+            box-sizing: border-box;
+            height: 100vh;
+            width: 100%;
+            align-items: center;
+            display: flex;
+            justify-content: center;
+            background-color: #fcfcfc;
+        }
+
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 5px 10px 0 rgba(0, 0, 0, 0.3);
+            width: 600px;
+            height: 800px;
+            background-color: #ffffff;
+            padding: 10px 30px 40px;
+        }
+
+        .card label {
+            display: inline-block;
+            padding-top: 18px;
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        .drop_box {
+            margin: 10px 0;
+            padding: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            border: 3px dotted #a3a3a3;
+            border-radius: 5px;
+        }
+
+        .drop_box h4 {
+            font-size: 16px;
+            font-weight: 400;
+            color: #2e2e2e;
+        }
+
+        .drop_box p {
+            margin-top: 10px;
+            margin-bottom: 20px;
+            font-size: 12px;
+            color: #a3a3a3;
+        }
+
+        .btn-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .btn-wrapper input[type=file] {
+            font-size: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+        }
+
+        button {
+            text-decoration: none;
+            background-color: #4070f4;
+            color: #ffffff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        input {
+            display: inline-block;
+            margin-top: 10px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            width: 60%;
+            border: 1.5px solid #a3a3a3;
+            border-radius: 4px;
+            padding: 10px 15px;
+        }
+
+        textarea {
+            display: inline-block;
+            margin-top: 10px;
+            font-size: 14px;
+            margin-bottom: 35px;
+            width: 83%;
+            height: 100px;
+            border: 1.5px solid #a3a3a3;
+            border-radius: 4px;
+            padding: 10px 15px;
+            resize: none;
+        }
+    </style>
+</head>
+
+<body>
+    <form method="POST" enctype="multipart/form-data">
+        <div class="container">
+            <div class="card">
+                <label>Upload Photo</label>
+                <div class="drop_box">
+                    <header>
+                        <h4>Select File here</h4>
+                    </header>
+                    <p>Files Supported: PNG, JPEG</p>
+                    <div class="btn-wrapper">
+                        <button class="btn">Choose File</button>
+                        <input type="file" id="photo" for="photo" name="photo">
+                    </div>
+                </div>
+                <label for="item name">Item Name</label>
+                <div>
+                    <input type="name" id="name" name="name" autocomplete="off">
+                </div>
+                <label for="item price">Suggested Price</label>
+                <div>
+                    <input type="text" id="price" name="price" autocomplete="off">
+                </div>
+                <label for="item description">Item Description</label>
+                <div>
+                    <textarea name="itemDesc" id="item description"></textarea>
+                </div>
+                <div><button type="submit">Post</button></div>
+            </div>
+        </div>
+    </form>
+    <!-- <form method="POST" enctype="multipart/form-data">
+        <label for="photo">Upload Photo</label>
+        <input type="file" id="photo" name="photo">
+        <label for="item name">Item Name</label>
+        <input type="name" id="name" name="name">
+        <label for="item price">Suggested Price</label>
+        <input type="text" id="price" name="price">
+        <label for="item description">Item Description</label>
+        <textarea name="itemDesc" id="item description"></textarea>
+        <button type="submit">Post</button>
+    </form> -->
+</body>
+
+</html>
