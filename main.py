@@ -95,17 +95,21 @@ def sign_up():
     if request.method == 'POST':
         user_name = request.form.get('userName', 'default value name')
         email = request.form.get('email', 'default value email')
-        password = request.form.get('password', 'default value password')
-        phone_number = request.form.get('phoneNumber', 'default phone_number')
-        address = request.form.get('address', 'default address')
 
-        salt = bcrypt.gensalt()
-        hashed_pass = bcrypt.hashpw(bytes(password, encoding='utf8'), salt)
+        if '.edu' not in email:
+            print("invalid email")
+        else:
+            password = request.form.get('password', 'default value password')
+            phone_number = request.form.get('phoneNumber', 'default phone_number')
+            address = request.form.get('address', 'default address')
 
-        engine.execute("INSERT INTO user (user_name, user_email, user_phone_number, user_address, "
-                       "user_password) VALUES (?, ?, ?, ?, ?);",
-                       (user_name, email, phone_number, address, hashed_pass))
-        return redirect('/')
+            salt = bcrypt.gensalt()
+            hashed_pass = bcrypt.hashpw(bytes(password, encoding='utf8'), salt)
+
+            engine.execute("INSERT INTO user (user_name, user_email, user_phone_number, user_address, "
+                           "user_password) VALUES (?, ?, ?, ?, ?);",
+                           (user_name, email, phone_number, address, hashed_pass))
+            return redirect('/')
     return render_template('signup.html')
 
 
@@ -192,9 +196,11 @@ def sell_item():
         photo.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
     return render_template('post_item.html')
 
+
 @app.route('/error')
 def display_error():
     return render_template('error.html')
+
 
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0")
