@@ -8,8 +8,6 @@ from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
-API_KEY = os.environ['API_KEY']
-print(API_KEY)
 
 Base = declarative_base()
 
@@ -45,7 +43,7 @@ app = Flask(__name__)
 UPLOAD_FOLDER = 'week4-project/static/images'
 app.config['SECRET_KEY'] = 'fec93d1b1cb7926beb25960608b25818'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-map_client = googlemaps.Client(API_KEY)
+map_client = googlemaps.Client('AIzaSyBU105nhaExFWjtUldUDYwFxEKG5bogWPU')
 Session = sessionmaker(engine)
 
 user_data = None
