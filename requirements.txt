@@ -8,3 +8,4 @@ requests==2.27.1
 SQLAlchemy==1.4.19
 WTForms==2.3.3
 bcrypt==3.2.2
+mime==0.1.0
