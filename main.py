@@ -4,6 +4,7 @@ import os
 import bcrypt
 import sqlalchemy as db
 from flask import Flask, redirect, jsonify, request, render_template, url_for
+from flask_login import LoginManager, UserMixin, login_required, current_user, login_user, logout_user
 from sqlalchemy import text
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker
@@ -15,9 +16,6 @@ from email.mime.multipart import MIMEMultipart
 import smtplib
 
 
-
-API_KEY = os.environ['API_KEY']
-print(API_KEY)
 
 Base = declarative_base()
 
@@ -32,8 +30,7 @@ if not inspector.has_table("user"):
         "`user_id` INTEGER NOT NULL PRIMARY KEY,"
         "`user_name` TEXT NOT NULL,"
         "`user_email` TEXT NOT NULL,"
-        "`user_phone_number` TEXT NOT NULL,"
-        "`user_address` TEXT NOT NULL,"
+        "`user_zip` TEXT NOT NULL,"
         "`user_password` TEXT NOT NULL"
         ")")
 
@@ -45,19 +42,30 @@ if not inspector.has_table("item"):
         "`item_price` TEXT NOT NULL,"
         "`item_description` TEXT NOT NULL,"
         "`seller_id` INTEGER NOT NULL,"
+        "`active` INTEGER NOT NULL,"
         "FOREIGN KEY (`seller_id`)"
         "   REFERENCES user (user_id)"
         ")")
 
+if not inspector.has_table("review"):
+    engine.execute(
+        "CREATE TABLE `review` ("
+        "`review_id` INTEGER NOT NULL PRIMARY KEY,"
+        "`review_score` INTEGER NOT NULL,"
+        "`review_text` TEXT NOT NULL,"
+        "`seller_id` INTEGER NOT NULL,"
+        "`user_id` INTEGER NOT NULL,"
+        "FOREIGN KEY (`seller_id`, `user_id`)"
+        "   REFERENCES user (user_id, user_id)"
+        ")")
+
+#Flask
 app = Flask(__name__)
 UPLOAD_FOLDER = 'final_proj/static/images'
 app.config['SECRET_KEY'] = 'fec93d1b1cb7926beb25960608b25818'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 map_client = googlemaps.Client(API_KEY)
 Session = sessionmaker(engine)
-
-user_data = None
-
 
 @app.route('/', methods=['POST', 'GET'])
 @app.route('/home', methods=['POST', 'GET'])
@@ -86,11 +94,19 @@ def login():
 def get_table_data():
     results = None
     data = []
+
+    user_data = []
+    with Session.begin() as session:
+        user_results = session.execute(text("SELECT * FROM user WHERE user_id='{}'".format(1)))
+        for r in user_results:
+            user_data = dict(r)
+            print(user_data['user_name'])
+
     with Session.begin() as session:
         results = session.execute(text('select * from user'))
         for r in results:
             data.append(dict(r))
-    return jsonify(data)
+    return str(data)
 
 
 @app.route('/sign_up', methods=['POST', 'GET'])
@@ -103,14 +119,13 @@ def sign_up():
         user_name = request.form.get('userName', 'default value name')
         email = request.form.get('email', 'default value email')
         password = request.form.get('password', 'default value password')
-        phone_number = request.form.get('phoneNumber', 'default phone_number')
         address = request.form.get('address', 'default address')
 
         salt = bcrypt.gensalt()
         hashed_pass = bcrypt.hashpw(bytes(password, encoding='utf8'), salt)
-        engine.execute("INSERT INTO user (user_name, user_email, user_phone_number, user_address, "
-                       "user_password) VALUES (?, ?, ?, ?, ?);",
-                       (user_name, email, phone_number, address, hashed_pass))
+        engine.execute("INSERT INTO user (user_name, user_email, user_zip, "
+                       "user_password) VALUES (?, ?, ?, ?);",
+                       (user_name, email, address, hashed_pass))
         return redirect('/')
     return render_template('signup.html')
 
@@ -159,7 +174,7 @@ def get_item(id: int):
         seller_results = session.execute(text('select * from user where user_id={}'.format(item_data['seller_id'])))
         for sr in seller_results:
             seller_data = dict(sr)
-    return render_template('itempage.html', item=item_data, seller=seller_data, user_address=user_data['user_address'])
+    return render_template('itempage.html', item=item_data, seller=seller_data, user_address=user_data['user_zip'])
 
 @app.route('/send_email/<email>')
 def send_email(email: str):
