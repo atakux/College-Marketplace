@@ -61,6 +61,7 @@ if not inspector.has_table("review"):
 
 #Flask
 app = Flask(__name__)
+API_KEY = os.environ['API_KEY']
 UPLOAD_FOLDER = 'final_proj/static/images'
 app.config['SECRET_KEY'] = 'fec93d1b1cb7926beb25960608b25818'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
