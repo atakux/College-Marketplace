@@ -8,6 +8,13 @@ from sqlalchemy import text
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
+from email.mime.application import MIMEApplication
+from email.mime.multipart import MIMEMultipart
+import smtplib
+
+
 
 API_KEY = os.environ['API_KEY']
 print(API_KEY)
@@ -43,7 +50,7 @@ if not inspector.has_table("item"):
         ")")
 
 app = Flask(__name__)
-UPLOAD_FOLDER = 'week4-project/static/images'
+UPLOAD_FOLDER = 'final_proj/static/images'
 app.config['SECRET_KEY'] = 'fec93d1b1cb7926beb25960608b25818'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 map_client = googlemaps.Client(API_KEY)
@@ -101,7 +108,6 @@ def sign_up():
 
         salt = bcrypt.gensalt()
         hashed_pass = bcrypt.hashpw(bytes(password, encoding='utf8'), salt)
-
         engine.execute("INSERT INTO user (user_name, user_email, user_phone_number, user_address, "
                        "user_password) VALUES (?, ?, ?, ?, ?);",
                        (user_name, email, phone_number, address, hashed_pass))
@@ -155,6 +161,25 @@ def get_item(id: int):
             seller_data = dict(sr)
     return render_template('itempage.html', item=item_data, seller=seller_data, user_address=user_data['user_address'])
 
+@app.route('/send_email/<email>')
+def send_email(email: str):
+    print(email)
+    smtp = smtplib.SMTP('smtp.gmail.com', 587)
+    smtp.ehlo()
+    smtp.starttls()
+    
+    # Login with your email and password
+    smtp.login('collegemarketplace345@gmail.com', 'toubticyusplqrnd')
+    
+    # message to be sent
+    message = "Item to be sold"
+    
+    # sending the mail
+    smtp.sendmail("collegemarketplace345@gmail.com", email, message)
+    
+    # Finally, don't forget to close the connection
+    smtp.quit()
+    return "bean"
 
 @app.route('/sell', methods=['POST', 'GET'])
 def sell_item():
