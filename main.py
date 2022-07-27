@@ -1,6 +1,7 @@
 import requests
 import googlemaps
 import os
+import bcrypt
 import sqlalchemy as db
 from flask import Flask, redirect, jsonify, request, render_template, url_for
 from sqlalchemy import text
@@ -8,7 +9,7 @@ from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
-#This is a thing I'm adding to make a commit
+# This is a thing I'm adding to make a commit
 
 Base = declarative_base()
 
@@ -44,7 +45,7 @@ app = Flask(__name__)
 UPLOAD_FOLDER = 'week4-project/static/images'
 app.config['SECRET_KEY'] = 'fec93d1b1cb7926beb25960608b25818'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-map_client = googlemaps.Client('[[API_KEY]]')
+map_client = googlemaps.Client('AIzaSyBU105nhaExFWjtUldUDYwFxEKG5bogWPU')
 Session = sessionmaker(engine)
 
 user_data = None
@@ -64,12 +65,13 @@ def login():
                 user_results = session.execute(text("select * from user where user_email='{}'".format(str(email))))
                 for r in user_results:
                     user_data = dict(r)
-            if password == user_data['user_password']:
+            if bcrypt.checkpw(bytes(password, encoding='utf8'), user_data['user_password']):
                 print("successful login")
                 return redirect(url_for('buy_sell'))
         except Exception as ex:
             print("error" + str(ex))
     return render_template('signin.html')
+
 
 # for testing
 @app.route('/user')
@@ -82,23 +84,28 @@ def get_table_data():
             data.append(dict(r))
     return jsonify(data)
 
+
 @app.route('/sign_up', methods=['POST', 'GET'])
 def sign_up():
-    '''
+    """
     Will be using a template. Likely will not need any input
     will need an output from the template in order to add the new user to the database
-    '''
+    """
     if request.method == 'POST':
         user_name = request.form.get('userName', 'default value name')
         email = request.form.get('email', 'default value email')
         password = request.form.get('password', 'default value password')
         phone_number = request.form.get('phoneNumber', 'default phone_number')
         address = request.form.get('address', 'default address')
-        engine.execute("INSERT INTO user (user_name, user_email, user_phone_number, user_address, user_password) "
-        "VALUES (?, ?, ?, ?, ?);", (user_name, email, phone_number, address, password))
+
+        salt = bcrypt.gensalt()
+        hashed_pass = bcrypt.hashpw(bytes(password, encoding='utf8'), salt)
+
+        engine.execute("INSERT INTO user (user_name, user_email, user_phone_number, user_address, "
+                       "user_password) VALUES (?, ?, ?, ?, ?);",
+                       (user_name, email, phone_number, address, hashed_pass))
         return redirect('/')
     return render_template('signup.html')
-
 
 
 @app.route('/buy_sell', methods=['GET', 'POST'])
