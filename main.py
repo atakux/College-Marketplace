@@ -3,7 +3,7 @@ import googlemaps
 import os
 import bcrypt
 import sqlalchemy as db
-from flask import Flask, redirect, jsonify, request, render_template, url_for
+from flask import Flask, redirect, jsonify, request, render_template, url_for, flash
 from sqlalchemy import text
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker
@@ -98,6 +98,8 @@ def sign_up():
 
         if '.edu' not in email:
             print("invalid email")
+            flash("You must input a school email.")
+            return render_template('signup.html')
         else:
             password = request.form.get('password', 'default value password')
             phone_number = request.form.get('phoneNumber', 'default phone_number')
