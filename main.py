@@ -66,7 +66,7 @@ if not inspector.has_table("review"):
 #Flask
 app = Flask(__name__)
 API_KEY = os.environ['API_KEY']
-UPLOAD_FOLDER = 'final_proj/static/images'
+UPLOAD_FOLDER = 'static/images'
 app.config['SECRET_KEY'] = 'fec93d1b1cb7926beb25960608b25818'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 map_client = googlemaps.Client(API_KEY)
@@ -230,8 +230,8 @@ def sell_item():
             if not connection.closed:
                 cursor.close()
                 connection.close()
-        engine.execute("INSERT INTO item (item_name, item_price, item_description, seller_id) "
-        "VALUES (?, ?, ?, ?);", (item_name, price, description, user_data['user_id']))
+        engine.execute("INSERT INTO item (item_name, item_price, item_description, seller_id, active) "
+        "VALUES (?, ?, ?, ?, ?);", (item_name, price, description, user_data['user_id'], True))
         photo = request.files['photo']
         filename = '{}.png'.format(id_num)
         photo.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
