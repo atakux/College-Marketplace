@@ -16,13 +16,13 @@
         <div class="forms">
             <div class="form signup">
                 <span class="title">Registration</span>
-                <!-- {% with messages = get_flashed_messages() %}
+                {% with messages = get_flashed_messages() %}
                 {% if messages %}
                 <div class="notification is-danger">
-                {{ messages[0] }}. <a href="{{ url_for('auth.login') }}">Click here to Login</a>.
+                {{ messages[0] }}
                 </div>
                 {% endif %}
-                {% endwith %} -->
+                {% endwith %}
                 <form method="POST">
                     <div class="input-field">
                         <div class="control">
@@ -33,8 +33,8 @@
                     </div>
                     <div class="input-field">
                         <div class="control">
-                            <input type="email" name="email" id="email" placeholder="Enter your email"
-                                autocomplete="off" required>
+                            <input type="email" name="email" id="email" title="Must be a school email"
+                                   placeholder="Enter your school email" autocomplete="off" required>
                             <i class="uil uil-envelope icon"></i>
                         </div>
                     </div>
