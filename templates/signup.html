@@ -7,8 +7,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.0/css/line.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <script type="text/javascript" src="{{ url_for('static', filename='firebase.js') }}"></script>
+    <link rel="stylesheet" href="/style.css">
+    <script src="/firebase.js"></script>
+    <script src="/firebase_signup.js"></script>
     <title>College Marketplace</title>
 </head>
 
@@ -47,21 +48,11 @@
                                 placeholder="Create a password" autocomplete="off" required>
                             <i class="uil uil-lock icon"></i>
                             <script>
-                                var myInput = document.getElementById("psw");
+                                var myInput = document.getElementById("password");
                                 var letter = document.getElementById("letter");
                                 var capital = document.getElementById("capital");
                                 var number = document.getElementById("number");
                                 var length = document.getElementById("length");
-
-                                // When the user clicks on the password field, show the message box
-                                myInput.onfocus = function () {
-                                    document.getElementById("message").style.display = "block";
-                                }
-
-                                // When the user clicks outside of the password field, hide the message box
-                                myInput.onblur = function () {
-                                    document.getElementById("message").style.display = "none";
-                                }
 
                                 // When the user starts to type something inside the password field
                                 myInput.onkeyup = function () {
@@ -124,15 +115,7 @@
                         <div class="control">
                             <input type="text" name="address" id="address" placeholder="Enter your address"
                                 autocomplete="off" required>
-                            <script type="text/javascript" src="address.js"></script>
                             <i class="uil uil-map-marker icon"></i>
-                        </div>
-                    </div>
-                    <div class="input-field">
-                        <div class="control">
-                            <input type="text" name="phoneNumber" id="phoneNumber" placeholder="Enter your phone number"
-                                autocomplete="off" size="10" required>
-                            <i class="uil uil-phone icon"></i>
                         </div>
                     </div>
                     <div class="input-field button">
@@ -141,7 +124,7 @@
                     
                     <div class="login-signup">
                         <span class="text">Already a member?
-                          <a href="/" class="text login-link">Login Here</a>
+                          <a href="/index.html" class="text login-link">Login Here</a>
                         </span>
                     </div>
                 </form>
