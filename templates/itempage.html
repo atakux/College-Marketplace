@@ -50,7 +50,7 @@
         <div>
             <h1>{{ item['item_name'] }} </h1>
             <h2 style="padding-bottom: 60px;">Price: {{ item['item_price'] }}</h2>
-            <button type="submit" id="btn">Purchase</button>
+            <button type="submit" id="btn"><a href="/send_email/{{ seller['user_email'] }}">Purchase</a></button>
         </div>
     </div>
 
