@@ -5,7 +5,9 @@ import bcrypt
 import sqlalchemy as db
 
 from flask import Flask, redirect, jsonify, request, render_template, url_for, flash
-from flask_login import LoginManager, UserMixin, login_required, current_user, login_user, logout_user
+
+# commented below bc it dont lemme run bc of some wekrzeug seucirty thing
+# from flask_login import LoginManager, UserMixin, login_required, current_user, login_user, logout_user
 
 from sqlalchemy import text
 from sqlalchemy import create_engine, MetaData
