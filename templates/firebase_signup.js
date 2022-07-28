@@ -22,7 +22,7 @@ const signupBtn = document.querySelector('#btn');
         email: String(new_email),
         id: auth.currentUser.uid,
         name: username,
-        zip_cope: zip
+        zip_code: zip
     });
 
   });

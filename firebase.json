@@ -1,0 +1,11 @@
+{
+  "emulators": {},
+  "hosting": {
+    "public": "templates",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  }
+}
