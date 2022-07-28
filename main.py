@@ -100,13 +100,6 @@ def get_table_data():
     results = None
     data = []
 
-    user_data = []
-    with Session.begin() as session:
-        user_results = session.execute(text("SELECT * FROM user WHERE user_id='{}'".format(1)))
-        for r in user_results:
-            user_data = dict(r)
-            print(user_data['user_name'])
-
     with Session.begin() as session:
         results = session.execute(text('select * from user'))
         for r in results:
@@ -130,15 +123,14 @@ def sign_up():
             return render_template('signup.html')
         else:
             password = request.form.get('password', 'default value password')
-            phone_number = request.form.get('phoneNumber', 'default phone_number')
             address = request.form.get('address', 'default address')
 
             salt = bcrypt.gensalt()
             hashed_pass = bcrypt.hashpw(bytes(password, encoding='utf8'), salt)
 
-            engine.execute("INSERT INTO user (user_name, user_email, user_phone_number, user_address, "
-                           "user_password) VALUES (?, ?, ?, ?, ?);",
-                           (user_name, email, phone_number, address, hashed_pass))
+            engine.execute("INSERT INTO user (user_name, user_email, user_zip, "
+                           "user_password) VALUES (?, ?, ?, ?);",
+                           (user_name, email, address, hashed_pass))
             return redirect('/')
     return render_template('signup.html')
 
