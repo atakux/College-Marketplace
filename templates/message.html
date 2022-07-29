@@ -1,0 +1,25 @@
+ <!DOCTYPE html>
+ <html>
+
+ <head>
+     <meta charset="UTF-8">
+     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.0/css/line.css">
+     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+ </head>
+
+ <body>
+     <form method="POST">
+         <label for="message content">Message Content</label>
+                <div>
+                    <textarea name="messageContent" id="message content"></textarea>
+                </div>
+         <div class="input-field button">
+             <button class="input-field button" type="submit" id="btn">Send</button>
+         </div>
+     </form>
+     <h1>Messages you have received</h1>
+ </body>
+
+ </html>

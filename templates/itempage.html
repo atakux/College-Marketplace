@@ -74,6 +74,8 @@
             &origin={{ user_address }}
             &destination={{ seller['user_address'] }}">
     </iframe>
+    <button type="submit" id="review-btn"><a href="/review/{{ seller['user_id'] }}">Review</a></button>
+    <button type="submit" id="msg-btn"><a href="/chat/{{ seller['user_id'] }}">Message</a></button>
 </body>
 
 </html>

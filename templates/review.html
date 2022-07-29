@@ -1,0 +1,31 @@
+ <!DOCTYPE html>
+ <html>
+
+ <head>
+     <meta charset="UTF-8">
+     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.0/css/line.css">
+     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+ </head>
+
+ <body>
+     <form method="POST">
+         <div class="input-field">
+             <input type="title" id="title" name="title" placeholder="Enter the title" autocomplete="off" required>
+         </div>
+         <div class="input-field">
+             <input type="password" id="password" name="password" placeholder="Enter your password" autocomplete="off" required>
+             <i class="uil uil-lock icon"></i>
+         </div>
+         <div class="input-field button">
+             <button class="input-field button" type="submit" id="btn">Login</button>
+         </div>
+         <div class="login-signup">
+             <span class="text">Not a member? <a href="/sign_up" class="text signup-link">Signup Now</a>
+             </span>
+         </div>
+     </form>
+ </body>
+
+ </html>
