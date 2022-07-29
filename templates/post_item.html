@@ -3,6 +3,7 @@
 
 <head>
     <script type="module" src="/firebase.js"></script>
+    <script type="module" src="/firebase_postitem.js"></script>
     <title>College Marketplace</title>
     <style>
         @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap");
@@ -129,19 +130,19 @@
                         <input type="file" id="photo" for="photo" name="photo">
                     </div>
                 </div>
-                <label for="item name">Item Name</label>
+                <label for="name">Item Name</label>
                 <div>
-                    <input type="name" id="name" name="name" autocomplete="off">
+                    <input type="text" id="name" name="name" autocomplete="off">
                 </div>
-                <label for="item price">Suggested Price</label>
+                <label for="price">Suggested Price</label>
                 <div>
                     <input type="text" id="price" name="price" autocomplete="off">
                 </div>
-                <label for="item description">Item Description</label>
+                <label for="itemDesc">Item Description</label>
                 <div>
-                    <textarea name="itemDesc" id="item description"></textarea>
+                    <textarea name="itemDesc" id="itemDesc"></textarea>
                 </div>
-                <div><button type="submit">Post</button></div>
+                <div><button type="submit" id="btn">Post</button></div>
             </div>
         </div>
     </form>
