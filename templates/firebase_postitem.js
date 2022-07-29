@@ -16,7 +16,7 @@ const addItemBtn = document.querySelector('#btn');
     addItemBtn.addEventListener('click', e => {
     e.preventDefault();
 
-    var file = e.target.files[0]
+    var file = document.getElementById("photo").files[0];
     const new_name = document.querySelector('#name').value;
     const new_price = document.querySelector('#price').value;
     const new_desc = document.querySelector('#itemDesc').value;
@@ -31,9 +31,6 @@ const addItemBtn = document.querySelector('#btn');
     });
     const imgRef = ref(stor, 'itemImages/' + String(docSnap.data().id + 1));
     uploadBytes(imgRef, file)
-
-    //Upload file
-    var task = storageRef.put(file);
 
     updateDoc(pksRef, "id", Number(docSnap.data().id + 1));
 });
