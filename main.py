@@ -293,6 +293,33 @@ def send_email(seller_id: str):
             return render_template('send_email.html', seller_data=seller_data, buyer_data=buyer_data)
     else:
         return redirect('/')
+ 
+@app.route('/send_report/<int:id>')
+def send_report(id: int):
+    global user_data
+    reported_data = None
+    with Session.begin() as session:
+        reported_res = session.execute(text('select * from user where user_id={}'.format(id)))
+        for repor in reported_res:
+            reported_data = dict(repor)
+    smtp = smtplib.SMTP('smtp.gmail.com', 587)
+    smtp.ehlo()
+    smtp.starttls()
+    msg = MIMEMultipart()
+    msg['Subject'] = "User {} has been reported!!".format(reported_data["user"])
+    # Login with your email and password
+    smtp.login('collegemarketplace345@gmail.com', 'toubticyusplqrnd')
+    
+    # message to be sent
+    txt = "{} has reported {}".format(user_data, reported_data)
+    msg.attach(MIMEText(txt))
+    
+    # sending the mail
+    smtp.sendmail("collegemarketplace345@gmail.com", "collegemarketplace345@gmail.com", msg.as_string())
+    
+    # Finally, don't forget to close the connection
+    smtp.quit()
+    return "report sent!!"
 
 @app.route('/review/<int:id>', methods=["GET", "POST"])
 def submit_review(id: int):
