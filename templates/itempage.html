@@ -46,7 +46,7 @@
 
 <body>
     <div class="container">
-        <img src="{{ url_for('static', filename='images/' + item['item_id']|string + '.png') }}" class="center">
+        <img src="{{ url_for('static', filename='images/' + item['item_id']|string + '.png') }}" class="center" style="max-width: 512px">
         <div>
             <h1>{{ item['item_name'] }} </h1>
             <h2 style="padding-bottom: 60px;">Price: {{ item['item_price'] }}</h2>
@@ -70,9 +70,7 @@
     <h3>Distance from seller: {{ distance }}</h3>
     <!--Space for the Map-->
     <iframe width="600" height="450" style="border:0" loading="lazy" allowfullscreen
-        referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps/embed/v1/directions?key=[[API_KEY]]
-            &origin={{ user_address }}
-            &destination={{ seller['user_address'] }}">
+        referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps/embed/v1/directions?key={{ API_KEY }}&origin=place_id%3A{{ user_zip }}&destination=place_id%3A{{ seller_zip }}">
     </iframe>
     <button type="submit" id="review-btn"><a href="/review/{{ seller['user_id'] }}">Review</a></button>
     <button type="submit" id="msg-btn"><a href="/chat/{{ seller['user_id'] }}">Message</a></button>
