@@ -1,10 +1,11 @@
 import { getAuth } from "https://www.gstatic.com/firebasejs/9.9.1/firebase-auth.js";
-import { collection, doc, setDoc, getFirestore, getDoc, FieldValue } from "https://www.gstatic.com/firebasejs/9.9.1/firebase-firestore.js";
+import { collection, doc, setDoc, getFirestore, getDoc, FieldValue, updateDoc } from "https://www.gstatic.com/firebasejs/9.9.1/firebase-firestore.js";
 
 const auth = getAuth();
 const db = getFirestore();
 const itemsRef = collection(db, "item-info");
 const pksRef = doc(db, "pks", "item-info");
+
 const docSnap = await getDoc(pksRef);
 //const increment = db.FieldValue.increment(1);
 
@@ -17,7 +18,7 @@ const addItemBtn = document.querySelector('#btn');
     const new_price = document.querySelector('#price').value;
     const new_desc = document.querySelector('#itemDesc').value;
 
-    setDoc(doc(itemsRef, String(docSnap.data().id)), {
+    setDoc(doc(itemsRef, String(docSnap.data().id + 1)), {
         name: String(new_name),
         id: Number(docSnap.data().id + 1),
         price: new_price,
@@ -26,7 +27,7 @@ const addItemBtn = document.querySelector('#btn');
         active: 1
     });
 
-    pksRef.update("id", FieldValue.increment(1));
+    updateDoc(pksRef, "id", Number(docSnap.data().id + 1));
 });
 
 console.log("in item add");
