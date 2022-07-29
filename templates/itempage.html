@@ -72,6 +72,8 @@
     <iframe width="600" height="450" style="border:0" loading="lazy" allowfullscreen
         referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps/embed/v1/directions?key={{ API_KEY }}&origin=place_id%3A{{ user_zip }}&destination=place_id%3A{{ seller_zip }}">
     </iframe>
+    <button type="submit" id="review-btn"><a href="/review/{{ seller['user_id'] }}">Review</a></button>
+    <button type="submit" id="msg-btn"><a href="/chat/{{ seller['user_id'] }}">Message</a></button>
 </body>
 
 </html>

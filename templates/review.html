@@ -1,0 +1,30 @@
+ <!DOCTYPE html>
+ <html>
+
+ <head>
+     <meta charset="UTF-8">
+     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.0/css/line.css">
+     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+ </head>
+
+ <body>
+     <form method="POST" enctype="multipart/form-data">
+         <div class="container">
+             <div class="card">
+                 <label for="score">Score (out of 10. no decimals)</label>
+                 <div>
+                     <input type="number" id="score" name="score" autocomplete="off">
+                 </div>
+                 <label for="reviewContent">Review Content</label>
+                 <div>
+                     <textarea name="reviewContent" id="reviewContent"></textarea>
+                 </div>
+                 <div><button type="submit">Post</button></div>
+             </div>
+         </div>
+     </form>
+ </body>
+
+ </html>

@@ -59,6 +59,17 @@ if not inspector.has_table("review"):
         "   REFERENCES user (user_id, user_id)"
         ")")
 
+if not inspector.has_table("message"):
+    engine.execute(
+        "CREATE TABLE `message` ("
+        "`message_id` INTEGER NOT NULL PRIMARY KEY,"
+        "`sender_id` INTEGER NOT NULL,"
+        "`receiver_id` INTEGER NOT NULL,"
+        "`message_content` STRING NOT NULL,"
+        "FOREIGN KEY (`sender_id`, `receiver_id`)"
+        "   REFERENCES user (user_id, user_id)"
+        ")")
+
 #Flask
 app = Flask(__name__)
 API_KEY = os.environ['API_KEY']
@@ -102,11 +113,23 @@ def logout():
 
 # for testing
 @app.route('/user')
-def get_table_data():
+def get_user_data():
     results = None
     data = []
     with Session.begin() as session:
         results = session.execute(text('select * from user'))
+        for r in results:
+            data.append(dict(r))
+    return str(data)
+
+# for testing
+@app.route('/reviews')
+def get_review_data():
+    results = None
+    data = []
+
+    with Session.begin() as session:
+        results = session.execute(text('select * from review'))
         for r in results:
             data.append(dict(r))
     return str(data)
@@ -271,6 +294,22 @@ def send_email(seller_id: str):
     else:
         return redirect('/')
 
+@app.route('/review/<int:id>', methods=["GET", "POST"])
+def submit_review(id: int):
+    global user_data
+    connection = None
+    id_num = 0
+    if user_data is None:
+        return redirect('/error')
+    if request.method == 'POST':
+        score = request.form.get('score', 'default score')
+        rev_content = request.form.get('reviewContent', 'default content')
+        engine.execute("INSERT INTO review (review_score, review_text, seller_id, user_id) "
+        "VALUES (?, ?, ?, ?);", (int(score), rev_content, id, user_data["user_id"]))
+    return render_template('review.html')
+        
+
+
 @app.route('/sell', methods=['POST', 'GET'])
 def sell_item():
     global user_data
@@ -300,7 +339,7 @@ def sell_item():
                     cursor.close()
                     connection.close()
             engine.execute("INSERT INTO item (item_name, item_price, item_description, seller_id, active) "
-            "VALUES (?, ?, ?, ?, ?);", (item_name, price, description, user_data['user_id'], True))
+            "VALUES (?, ?, ?, ?, ?);", (item_name, price, description, user_data['user_id'], 1))
             photo = request.files['photo']
             filename = '{}.png'.format(id_num)
             photo.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
@@ -308,6 +347,22 @@ def sell_item():
         return render_template('post_item.html')
     else:
         return redirect('/')
+
+
+@app.route('/chat/<int:id>', methods=['POST', 'GET'])
+def message(id: int):
+    global user_data
+    msg_data = "Nothing"
+    if request.method == 'POST':
+        msg_content = request.form.get('messageContent', 'default content')
+        engine.execute("INSERT INTO message (sender_id, receiver_id, message_content) VALUES (?, ?, ?);", 
+        (user_data["user_id"], id, msg_content))
+    with Session.begin() as session:
+        msg_results = session.execute(text('select * from message where receiver_id={}'.format(user_data["user_id"])))
+        for mr in msg_results:
+            msg_data = dict(mr)
+        print(msg_data)
+    return render_template('message.html')
 
 
 @app.route('/error')
