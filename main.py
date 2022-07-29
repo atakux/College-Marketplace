@@ -107,12 +107,24 @@ def login():
 
 # for testing
 @app.route('/user')
-def get_table_data():
+def get_user_data():
     results = None
     data = []
 
     with Session.begin() as session:
         results = session.execute(text('select * from user'))
+        for r in results:
+            data.append(dict(r))
+    return str(data)
+
+# for testing
+@app.route('/reviews')
+def get_review_data():
+    results = None
+    data = []
+
+    with Session.begin() as session:
+        results = session.execute(text('select * from review'))
         for r in results:
             data.append(dict(r))
     return str(data)
@@ -204,10 +216,8 @@ def send_email(email: str):
     
     # message to be sent
     message = "Item to be sold"
-    
     # sending the mail
     smtp.sendmail("collegemarketplace345@gmail.com", email, message)
-    
     # Finally, don't forget to close the connection
     smtp.quit()
     return "bean"
@@ -219,17 +229,13 @@ def submit_review(id: int):
     id_num = 0
     if user_data is None:
         return redirect('/error')
-    try:
-        connection = engine.connect()
-        cursor = connection.execute("SELECT count(*) from review;")
-        result = cursor.scalar()
-        id_num = int(result) + 1
-    except:
-        print("something went wrong")
-    finally:
-        if not connection.closed:
-            cursor.close()
-            connection.close()
+    if request.method == 'POST':
+        score = request.form.get('score', 'default score')
+        rev_content = request.form.get('reviewContent', 'default content')
+        engine.execute("INSERT INTO review (review_score, review_text, seller_id, user_id) "
+        "VALUES (?, ?, ?, ?);", (int(score), rev_content, id, user_data["user_id"]))
+    return render_template('review.html')
+        
 
 
 @app.route('/sell', methods=['POST', 'GET'])
