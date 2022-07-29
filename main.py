@@ -13,7 +13,7 @@ from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
-import smtplib
+import smtplib, ssl
 
 
 
@@ -224,23 +224,75 @@ def get_item(id: int):
     else:
         return redirect('/')
 
-@app.route('/send_email/<email>')
-def send_email(email: str):
-    print(email)
-    smtp = smtplib.SMTP('smtp.gmail.com', 587)
-    smtp.ehlo()
-    smtp.starttls()
-    
-    # Login with your email and password
-    smtp.login('collegemarketplace345@gmail.com', 'toubticyusplqrnd')
-    
-    # message to be sent
-    message = "Item to be sold"
-    # sending the mail
-    smtp.sendmail("collegemarketplace345@gmail.com", email, message)
-    # Finally, don't forget to close the connection
-    smtp.quit()
-    return "bean"
+@app.route('/send_email/<seller_id>', methods=['POST', 'GET'])
+def send_email(seller_id: str):
+    """Allows you send email to the user of associated id"""
+    global user_data
+    seller_data = {}
+    buyer_data = {}
+
+    if check_login():
+        print(seller_id)
+
+        #Get Data
+        with Session.begin() as session:
+            seller_results = session.execute('select * from user where user_id={}'.format(seller_id))
+            for sr in seller_results:
+                seller_data = dict(sr)
+            buyer_results = session.execute('select * from user where user_id={}'.format(user_data['user_id']))
+            for br in buyer_results:
+                buyer_data = dict(br)
+            
+        if request.method == 'POST':
+            #Send Email
+            #https://realpython.com/python-send-email/#option-1-setting-up-a-gmail-account-for-development
+            subject = request.form.get('subject', '')
+            message_text = request.form.get('message', '')
+
+            sender_email = "collegemarketplace345@gmail.com"
+            sender_password = "toubticyusplqrnd"
+            receiver_email = seller_data['user_email']
+
+            message = MIMEMultipart("alternative")
+            message["Subject"] = f"CMP Message from {buyer_data['user_name']} - {subject}" 
+            message["From"] = sender_email
+            message["To"] = receiver_email
+
+            # Create the plain-text and HTML version of your message
+            text = message_text
+            html = """\
+            <html>
+            <body>
+                <p>{}</p>
+                <br>
+                <p>To reply, please click this link: <a href="" target="_blank_"></a></p>
+            </body>
+            </html>
+            """.format(message_text.replace('\n', "<br>"))
+            print(text)
+            print(html)
+
+            # Turn these into plain/html MIMEText objects
+            part1 = MIMEText(text, "plain")
+            part2 = MIMEText(html, "html")
+
+            # Add HTML/plain-text parts to MIMEMultipart message
+            # The email client will try to render the last part first
+            message.attach(part1)
+            message.attach(part2)
+
+            # Create secure connection with server and send email
+            context = ssl.create_default_context()
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
+                server.login(sender_email, sender_password)
+                server.sendmail(
+                    sender_email, receiver_email, message.as_string()
+                )
+            return redirect('/buy_sell')
+        else:
+            return render_template('send_email.html', seller_data=seller_data, buyer_data=buyer_data)
+    else:
+        return redirect('/')
 
 @app.route('/review/<int:id>', methods=["GET", "POST"])
 def submit_review(id: int):
@@ -270,8 +322,6 @@ def sell_item():
         user = request.form
         return 'adding item please wait a moment'''
     if check_login():
-        if user_data is None:
-            return redirect('/')
         if request.method == 'POST':
             item_name = request.form.get('name', 'default item name')
             price = request.form.get('price', 'default price')
