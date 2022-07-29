@@ -216,9 +216,6 @@ def get_item(id: int):
         user_place_id = user_place_id['results'][0]["place_id"]
         seller_place_id = (requests.get(f"https://maps.googleapis.com/maps/api/geocode/json?address={seller_data['user_zip']}&key={API_KEY}")).json()
         seller_place_id = seller_place_id['results'][0]["place_id"]
-        print(user_place_id)
-        print(seller_place_id)
-        
 
         return render_template('itempage.html', item=item_data, seller=seller_data, user_zip=user_place_id, seller_zip=seller_place_id, API_KEY=API_KEY)
     else:
@@ -297,43 +294,50 @@ def send_email(seller_id: str):
 @app.route('/send_report/<int:id>')
 def send_report(id: int):
     global user_data
-    reported_data = None
-    with Session.begin() as session:
-        reported_res = session.execute(text('select * from user where user_id={}'.format(id)))
-        for repor in reported_res:
-            reported_data = dict(repor)
-    smtp = smtplib.SMTP('smtp.gmail.com', 587)
-    smtp.ehlo()
-    smtp.starttls()
-    msg = MIMEMultipart()
-    msg['Subject'] = "User {} has been reported!!".format(reported_data["user"])
-    # Login with your email and password
-    smtp.login('collegemarketplace345@gmail.com', 'toubticyusplqrnd')
     
-    # message to be sent
-    txt = "{} has reported {}".format(user_data, reported_data)
-    msg.attach(MIMEText(txt))
-    
-    # sending the mail
-    smtp.sendmail("collegemarketplace345@gmail.com", "collegemarketplace345@gmail.com", msg.as_string())
-    
-    # Finally, don't forget to close the connection
-    smtp.quit()
-    return "report sent!!"
+    if check_login():
+        reported_data = None
+        with Session.begin() as session:
+            reported_res = session.execute(text('select * from user where user_id={}'.format(id)))
+            for repor in reported_res:
+                reported_data = dict(repor)
+        smtp = smtplib.SMTP('smtp.gmail.com', 587)
+        smtp.ehlo()
+        smtp.starttls()
+        msg = MIMEMultipart()
+        msg['Subject'] = "User {} has been reported!!".format(reported_data["user_name"])
+        # Login with your email and password
+        smtp.login('collegemarketplace345@gmail.com', 'toubticyusplqrnd')
+        
+        # message to be sent
+        txt = "{} has reported {}".format(user_data, reported_data)
+        msg.attach(MIMEText(txt))
+        
+        # sending the mail
+        smtp.sendmail("collegemarketplace345@gmail.com", "collegemarketplace345@gmail.com", msg.as_string())
+        
+        # Finally, don't forget to close the connection
+        smtp.quit()
+        return "report sent!!"
+    else:
+        return redirect('/')
 
 @app.route('/review/<int:id>', methods=["GET", "POST"])
 def submit_review(id: int):
     global user_data
-    connection = None
-    id_num = 0
-    if user_data is None:
-        return redirect('/error')
-    if request.method == 'POST':
-        score = request.form.get('score', 'default score')
-        rev_content = request.form.get('reviewContent', 'default content')
-        engine.execute("INSERT INTO review (review_score, review_text, seller_id, user_id) "
-        "VALUES (?, ?, ?, ?);", (int(score), rev_content, id, user_data["user_id"]))
-    return render_template('review.html')
+    if check_login():
+        connection = None
+        id_num = 0
+        if user_data is None:
+            return redirect('/error')
+        if request.method == 'POST':
+            score = request.form.get('score', 'default score')
+            rev_content = request.form.get('reviewContent', 'default content')
+            engine.execute("INSERT INTO review (review_score, review_text, seller_id, user_id) "
+            "VALUES (?, ?, ?, ?);", (int(score), rev_content, id, user_data["user_id"]))
+        return render_template('review.html')
+    else:
+        return redirect('/')
         
 
 
@@ -379,17 +383,20 @@ def sell_item():
 @app.route('/chat/<int:id>', methods=['POST', 'GET'])
 def message(id: int):
     global user_data
-    msg_data = "Nothing"
-    if request.method == 'POST':
-        msg_content = request.form.get('messageContent', 'default content')
-        engine.execute("INSERT INTO message (sender_id, receiver_id, message_content) VALUES (?, ?, ?);", 
-        (user_data["user_id"], id, msg_content))
-    with Session.begin() as session:
-        msg_results = session.execute(text('select * from message where receiver_id={}'.format(user_data["user_id"])))
-        for mr in msg_results:
-            msg_data = dict(mr)
-        print(msg_data)
-    return render_template('message.html')
+    if check_login():
+        msg_data = "Nothing"
+        if request.method == 'POST':
+            msg_content = request.form.get('messageContent', 'default content')
+            engine.execute("INSERT INTO message (sender_id, receiver_id, message_content) VALUES (?, ?, ?);", 
+            (user_data["user_id"], id, msg_content))
+        with Session.begin() as session:
+            msg_results = session.execute(text('select * from message where receiver_id={}'.format(user_data["user_id"])))
+            for mr in msg_results:
+                msg_data = dict(mr)
+            print(msg_data)
+        return render_template('message.html')
+    else:
+        return redirect('/')
 
 
 @app.route('/error')
