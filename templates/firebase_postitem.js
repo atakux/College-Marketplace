@@ -1,8 +1,10 @@
 import { getAuth } from "https://www.gstatic.com/firebasejs/9.9.1/firebase-auth.js";
 import { collection, doc, setDoc, getFirestore, getDoc, FieldValue, updateDoc } from "https://www.gstatic.com/firebasejs/9.9.1/firebase-firestore.js";
+import { getStorage, ref, uploadBytes } from "https://www.gstatic.com/firebasejs/9.9.1/firebase-storage.js";
 
 const auth = getAuth();
 const db = getFirestore();
+const stor = getStorage();
 const itemsRef = collection(db, "item-info");
 const pksRef = doc(db, "pks", "item-info");
 
@@ -14,6 +16,7 @@ const addItemBtn = document.querySelector('#btn');
     addItemBtn.addEventListener('click', e => {
     e.preventDefault();
 
+    var file = e.target.files[0]
     const new_name = document.querySelector('#name').value;
     const new_price = document.querySelector('#price').value;
     const new_desc = document.querySelector('#itemDesc').value;
@@ -26,6 +29,11 @@ const addItemBtn = document.querySelector('#btn');
         seller_id: auth.currentUser.uid,
         active: 1
     });
+    const imgRef = ref(stor, 'itemImages/' + String(docSnap.data().id + 1));
+    uploadBytes(imgRef, file)
+
+    //Upload file
+    var task = storageRef.put(file);
 
     updateDoc(pksRef, "id", Number(docSnap.data().id + 1));
 });
