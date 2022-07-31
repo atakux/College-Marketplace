@@ -81,6 +81,31 @@ Session = sessionmaker(engine)
 
 @app.route('/', methods=['POST', 'GET'])
 @app.route('/home', methods=['POST', 'GET'])
+def home():
+    global user_data
+    '''
+    use render template to load the data into whatever the template is
+    This is the list of items page where each item is on display
+    '''
+    #Get User Data if Logged in
+    if check_login():
+        user = user_data
+    else:
+        user = False
+
+    #Get item data
+    results = None
+    data = []
+    with Session.begin() as session:
+        results = session.execute(text('select * from item'))
+        for r in results:
+            r_dict = dict(r)
+            r_dict['seller_name'] = get_seller_name_by_id(r_dict['seller_id'])
+            data.append(r_dict)
+    
+    return render_template('home.html', item_list=data, user_data=user)    
+
+@app.route('/login', methods=['POST', 'GET'])
 def login():
     global user_data
 
@@ -96,7 +121,7 @@ def login():
                         user_data = dict(r)
                 if bcrypt.checkpw(bytes(password, encoding='utf8'), user_data['user_password']):
                     print("successful login")
-                    return redirect('buy_sell')
+                    return redirect('/')
             except Exception as ex:
                 print("error" + str(ex))
         return render_template('signin.html')
@@ -108,7 +133,7 @@ def logout():
     global user_data
     if check_login():
         user_data = None
-    return redirect('/')
+    return redirect('/login')
 
 
 # for testing
@@ -160,7 +185,7 @@ def sign_up():
                 engine.execute("INSERT INTO user (user_name, user_email, user_zip, "
                             "user_password) VALUES (?, ?, ?, ?);",
                             (user_name, email, address, hashed_pass))
-                return redirect('/')
+                return redirect('/login')
         return render_template('signup.html')
     else:
         return redirect('buy_sell')
@@ -175,25 +200,7 @@ def buy_sell():
     if check_login():
         return render_template('buy_or_sell_page.html')
     else:
-        return redirect('/')
-
-@app.route('/buy')
-def list_of_items():
-    global user_data
-    '''
-    use render template to load the data into whatever the template is
-    This is the list of items page where each item is on display
-    '''
-    if check_login():
-        results = None
-        data = []
-        with Session.begin() as session:
-            results = session.execute(text('select * from item'))
-            for r in results:
-                data.append(dict(r))
-        return render_template('list_of_items_page.html', item_list=data)
-    else:
-        return redirect('/')
+        return redirect('/login')    
 
 @app.route('/item/<int:id>')
 def get_item(id: int):
@@ -219,7 +226,7 @@ def get_item(id: int):
 
         return render_template('itempage.html', item=item_data, seller=seller_data, user_zip=user_place_id, seller_zip=seller_place_id, API_KEY=API_KEY)
     else:
-        return redirect('/')
+        return redirect('/login')
 
 @app.route('/send_email/<seller_id>', methods=['POST', 'GET'])
 def send_email(seller_id: str):
@@ -289,7 +296,7 @@ def send_email(seller_id: str):
         else:
             return render_template('send_email.html', seller_data=seller_data, buyer_data=buyer_data)
     else:
-        return redirect('/')
+        return redirect('/login')
  
 @app.route('/send_report/<int:id>')
 def send_report(id: int):
@@ -320,7 +327,7 @@ def send_report(id: int):
         smtp.quit()
         return "report sent!!"
     else:
-        return redirect('/')
+        return redirect('/login')
 
 @app.route('/review/<int:id>', methods=["GET", "POST"])
 def submit_review(id: int):
@@ -337,7 +344,7 @@ def submit_review(id: int):
             "VALUES (?, ?, ?, ?);", (int(score), rev_content, id, user_data["user_id"]))
         return render_template('review.html')
     else:
-        return redirect('/')
+        return redirect('/login')
         
 
 
@@ -374,10 +381,10 @@ def sell_item():
             photo = request.files['photo']
             filename = '{}.png'.format(id_num)
             photo.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            return redirect('/buy')
+            return redirect('/home')
         return render_template('post_item.html')
     else:
-        return redirect('/')
+        return redirect('/login')
 
 
 @app.route('/chat/<int:id>', methods=['POST', 'GET'])
@@ -396,7 +403,7 @@ def message(id: int):
             print(msg_data)
         return render_template('message.html')
     else:
-        return redirect('/')
+        return redirect('/login')
 
 
 @app.route('/error')
@@ -413,6 +420,12 @@ def check_login():
             return True
     except NameError:
         return False
+
+def get_seller_name_by_id(id):
+    with Session.begin() as session:
+            seller_results = session.execute(text('select * from user where user_id={}'.format(id)))
+            for sr in seller_results:
+                return sr['user_name']
 
 
 if __name__ == '__main__':

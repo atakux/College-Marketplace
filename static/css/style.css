@@ -1,0 +1,99 @@
+@import url("https://fonts.googleapis.com/css?family=Poppins:400,300,500,600");
+
+:root {
+  --bastille: rgba(31, 34, 48);
+  --alabaster: rgba(251, 251, 251);
+  --silver: rgba(192, 192, 192);
+  --dodger-blue: rgba(47, 136, 255);
+}
+
+* {
+  font-family: "Poppins";
+}
+
+#display_image{
+    width: 375px;
+    height: 211px;
+    border: 1px solid black;
+    background-position: center;
+    background-size: cover;
+}
+
+html,
+body {
+  background-color: var(--alabaster);
+  width: 100%;
+  height: 100%;
+  margin: 0px;
+  padding: 0px;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+footer {
+  justify-content: space-between;
+  background-color: #202128;
+  color: var(--alabaster);
+  display: flex;
+  height: 120px;
+  margin-top: 220px;
+  padding: 90px 170px;
+}
+
+footer div {
+  margin-top: 60px;
+}
+
+.navbar {
+  align-items: flex-end;
+  max-width: 87vw;
+  justify-content: space-between;
+  display: flex;
+  margin: auto;
+  margin-top: 60px;
+}
+
+.title {
+  color: var(--bastille);
+  font-size: 36px;
+  font-weight: 600;
+  height: 65px;
+}
+
+.search {
+  border: 1px solid var(--silver);
+  margin-bottom: 14.5px;
+  border-radius: 20px;
+  padding: 5px 18px;
+  height: 25px;
+  width: 485px;
+  font-size: 16px;
+}
+
+.search:focus {
+    outline: 1px solid var(--dodger-blue);
+}
+
+.button {
+    background-color: var(--dodger-blue);
+    border-radius: 12px;
+    border: 0;
+    margin-bottom: 14.5px;
+    padding: 7px 20px;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--alabaster);
+    cursor: pointer;
+  }
+
+.button.back {
+    color: var(--dodger-blue);
+}
+
+.button.back:hover {
+    background-color: var(--dodger-blue);
+    color: var(--alabaster);
+}
