@@ -88,7 +88,7 @@ def home():
     This is the list of items page where each item is on display
     '''
     #Get User Data if Logged in
-    if check_login():
+    if is_logged_in():
         user = user_data
     else:
         user = False
@@ -109,7 +109,7 @@ def home():
 def login():
     global user_data
 
-    if not check_login():
+    if not is_logged_in():
         if request.method == 'POST':
             email = request.form.get('email', 'default value email')
             password = request.form.get('password', 'default value password')
@@ -131,7 +131,7 @@ def login():
 @app.route('/logout')
 def logout():
     global user_data
-    if check_login():
+    if is_logged_in():
         user_data = None
     return redirect('/login')
 
@@ -166,7 +166,7 @@ def sign_up():
     Will be using a template. Likely will not need any input
     will need an output from the template in order to add the new user to the database
     """
-    if not check_login():
+    if not is_logged_in():
         if request.method == 'POST':
             user_name = request.form.get('userName', 'default value name')
             email = request.form.get('email', 'default value email')
@@ -197,7 +197,7 @@ def buy_sell():
     '''
     Display buy or sell page
     '''
-    if check_login():
+    if is_logged_in():
         return render_template('buy_or_sell_page.html')
     else:
         return redirect('/login')    
@@ -208,7 +208,7 @@ def get_item(id: int):
     item_data = {}
     seller_data = {}
 
-    if check_login():
+    if is_logged_in():
         with Session.begin() as session:
             item_results = session.execute(text('select * from item where item_id={}'.format(id)))
             for ir in item_results:
@@ -235,7 +235,7 @@ def send_email(seller_id: str):
     seller_data = {}
     buyer_data = {}
 
-    if check_login():
+    if is_logged_in():
         print(seller_id)
 
         #Get Data
@@ -302,7 +302,7 @@ def send_email(seller_id: str):
 def send_report(id: int):
     global user_data
     
-    if check_login():
+    if is_logged_in():
         reported_data = None
         with Session.begin() as session:
             reported_res = session.execute(text('select * from user where user_id={}'.format(id)))
@@ -332,7 +332,7 @@ def send_report(id: int):
 @app.route('/review/<int:id>', methods=["GET", "POST"])
 def submit_review(id: int):
     global user_data
-    if check_login():
+    if is_logged_in():
         connection = None
         id_num = 0
         if user_data is None:
@@ -359,7 +359,7 @@ def sell_item():
     if request.method == 'POST':
         user = request.form
         return 'adding item please wait a moment'''
-    if check_login():
+    if is_logged_in():
         if request.method == 'POST':
             item_name = request.form.get('name', 'default item name')
             price = request.form.get('price', 'default price')
@@ -390,7 +390,7 @@ def sell_item():
 @app.route('/chat/<int:id>', methods=['POST', 'GET'])
 def message(id: int):
     global user_data
-    if check_login():
+    if is_logged_in():
         msg_data = "Nothing"
         if request.method == 'POST':
             msg_content = request.form.get('messageContent', 'default content')
@@ -410,7 +410,7 @@ def message(id: int):
 def display_error():
     return render_template('error.html')
 
-def check_login():
+def is_logged_in():
     global user_data
     """Checks to see if user is logged in. If so, returns true. If not, returns false"""
     try:
