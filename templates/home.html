@@ -23,11 +23,19 @@
                 <img src="{{ url_for('static', filename='images/' + actual_item['item_id']|string + '.png') }}" class="center" style="max-width: 370px">
                 <div class="item-name"><a href="/item/{{ actual_item['item_id'] }}">{{ actual_item['item_name'] }}</a></div>
                 <div class="price">
-                    <p class="tag">
-                        Price: {{ actual_item['item_price'] }}
-                        <br>
-                        Seller: <a href="">{{ actual_item['seller_name'] }}</a>
-                    </p>    
+                    <div>
+                        <p class="tag">
+                            Price:
+                        </p>
+                        ${{ actual_item['item_price'] }}
+                    </div>
+                    <div>
+                        <p class="tag">
+                            Seller:
+                        </p>
+                        <a href="">{{ actual_item['seller_name'] }}</a>
+                    </div>
+                    
                 </div>
                 <a href="/item/{{ actual_item['item_id'] }}"><button class="purchase button">See More</button></a>
             </div>

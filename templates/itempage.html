@@ -1,80 +1,54 @@
+{% extends "layout.html" %}
+{% block content %}
 <!DOCTYPE html>
 <html>
 
 <head>
-    <title>
-        College Marketplace
-    </title>
-    <style>
-        * {
-            font-family: "Poppins", sans-serif;
-        }
-
-        body {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        img {
-            padding-right: 60px;
-            padding-bottom: 60px;
-        }
-
-        button {
-            text-decoration: none;
-            background-color: #4070f4;
-            color: #ffffff;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            outline: none;
-        }
-
-        label {
-            display: inline-block;
-            padding-top: 18px;
-            font-size: 22px;
-            font-weight: 600;
-        }
-
-        .container {
-            display: flex;
-            flex-direction: row;
-        }
-    </style>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css?family=Poppins&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/item.css') }}">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <title>College Marketplace</title>
 </head>
 
 <body>
     <div class="container">
         <img src="{{ url_for('static', filename='images/' + item['item_id']|string + '.png') }}" class="center" style="max-width: 512px">
-        <div>
-            <h1>{{ item['item_name'] }} </h1>
-            <h2 style="padding-bottom: 60px;">Price: {{ item['item_price'] }}</h2>
-            <button type="submit" id="btn"><a href="/send_email/{{ seller['user_email'] }}">Purchase</a></button>
+        <div class="details">
+            <div class="item-name">{{ item['item_name'] }} </div>
+            <div class="price"><p class="tag">Price:</p> ${{ item['item_price'] }}</div>
+            <button style="font-size: 22px;" class="button" type="submit" id="btn"><a href="/send_email/{{ seller['user_email'] }}">Purchase</a></button>
         </div>
     </div>
 
-    <label>Description</label>
+    <h1>Description</h1>
     <div>
         <p>{{ item['item_description'] }}</p>
     </div>
 
-    <label>
-        Seller Information
-    </label>
+    <div class="seller-info">
+        <iframe width="600" height="450" style="border:0" loading="lazy" allowfullscreen
+            referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps/embed/v1/directions?key={{ API_KEY }}&origin=place_id%3A{{ user_zip }}&destination=place_id%3A{{ seller_zip }}">
+        </iframe>
+        <div class="seller">
+            <h2>Seller Information</h2>
 
-    <h3>Name: {{ seller['user_name'] }} </h3>
-    <h3>Email: {{ seller['user_email'] }}</h3>
-    <h3>Phone Number: {{ seller['user_phone_number'] }}</h3>
+            <h3>Name: <label>{{ seller['user_name'] }}</label> </h3>
+            <h3>Email: <label>{{ seller['user_email'] }}</label> </h3>
 
-    <h3>Distance from seller: {{ distance }}</h3>
-    <!--Space for the Map-->
-    <iframe width="600" height="450" style="border:0" loading="lazy" allowfullscreen
-        referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps/embed/v1/directions?key={{ API_KEY }}&origin=place_id%3A{{ user_zip }}&destination=place_id%3A{{ seller_zip }}">
-    </iframe>
-    <button type="submit" id="review-btn"><a href="/review/{{ seller['user_id'] }}">Review</a></button>
-    <button type="submit" id="msg-btn"><a href="/chat/{{ seller['user_id'] }}">Message</a></button>
-    <button type="submit" id="report-btn"><a href="/send_report/{{ seller['user_id'] }}">Report Seller</a></button>
+            <h3>Distance from seller: <label>{{ distance }}</label> </h3>
+        </div>
+        
+    </div>
+    <div style="margin-left: 40vh; margin-top: 50px;">
+        <button type="submit" id="review-btn"><a href="/review/{{ seller['user_id'] }}">Review</a></button>
+        <button type="submit" id="msg-btn"><a href="/chat/{{ seller['user_id'] }}">Message</a></button>
+        <button type="submit" id="report-btn"><a href="/send_report/{{ seller['user_id'] }}">Report Seller</a></button>
+    </div>
 </body>
 
 </html>
+{% endblock content %}
