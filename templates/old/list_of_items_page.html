@@ -26,13 +26,7 @@
     </style>
 </head>
 <body> 
-    {% for actual_item in item_list %}
-        <div>
-            <img src="{{ url_for('static', filename='images/' + actual_item['item_id']|string + '.png') }}" class="center" style="max-width: 512px">
-            <h1><a href="/item/{{actual_item['item_id']}}">{{ actual_item['item_name'] }}</a> </h1>
-            <h2>Price: {{ actual_item['item_price'] }}</h2>
-        </div>
-    {% endfor %}
+    
 </body>
 </html>
 

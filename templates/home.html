@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+{% block content %}
+    <head><link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}"></head>
+    <div class="background">
+        {% if user_data == false %}
+            <h1 class="welcome">Welcome to College Marketplace</h1>
+        {% else %}
+            <h1 class="welcome">Welcome, {{ user_data['user_name'] }}</h1>
+        {% endif %}
+    </div>
+    <div class="item-list">
+
+        {% for actual_item in item_list %}
+            <!--
+            <div>
+                <img src="{{ url_for('static', filename='images/' + actual_item['item_id']|string + '.png') }}" class="center" style="max-width: 512px">
+                <h1><a href="/item/{{actual_item['item_id']}}">{{ actual_item['item_name'] }}</a></h1>
+                <h2>Price: {{ actual_item['item_price'] }}</h2>
+            </div>
+            -->
+
+            <div style="--animation-order: {{ loop.index }};" class="item reveal">
+                <img src="{{ url_for('static', filename='images/' + actual_item['item_id']|string + '.png') }}" class="center" style="max-width: 370px">
+                <div class="item-name"><a href="/item/{{ actual_item['item_id'] }}">{{ actual_item['item_name'] }}</a></div>
+                <div class="price">
+                    <p class="tag">
+                        Price: {{ actual_item['item_price'] }}
+                        <br>
+                        Seller: <a href="">{{ actual_item['seller_name'] }}</a>
+                    </p>    
+                </div>
+                <a href="/item/{{ actual_item['item_id'] }}"><button class="purchase button">See More</button></a>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock content %}

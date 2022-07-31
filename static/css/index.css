@@ -1,0 +1,81 @@
+  .purchase {
+    font-size: 20px;
+  }
+  
+  .background {
+    align-items: flex-start;
+    background-color: rgb(70, 71, 79);
+    margin-top: 90px;
+    padding: 115px 285px;
+  }
+  
+  .welcome {
+    color: var(--alabaster);
+    font-size: 44px;
+    font-weight: 600;
+  }
+  
+  .item-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    max-width: 64vw;
+    margin: auto;
+    margin-top: 50px;
+  }
+  
+  .reveal {
+    animation-name: fade-in;
+    animation-duration: 100ms;
+    animation-delay: calc(var(--animation-order) * 190ms);
+    animation-fill-mode: both;
+    animation-timing-function: ease-in;
+  }
+  
+  @keyframes fade-in {
+    0% {
+      opacity: 0;
+      transform: translateY(0);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(5px);
+    }
+  }
+  
+  .item {
+    padding: 28px 30px;
+    opacity: 0;
+    margin-top: 100px;
+    border: 1px;
+    border-style: solid;
+    border-radius: 12px;
+    border-color: var(--silver);
+    flex-direction: column;
+    min-height: 475px;
+    width: 370px;
+  }
+  
+  .item-name {
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--bastille);
+  }
+  
+  .price {
+    padding: 12px 0 30px;
+    display: flex;
+    align-items: baseline;
+    font-size: 24px;
+    font-weight: 500;
+  }
+
+  .price .tag {
+    float: left;
+    letter-spacing: 1.1px;
+    font-size: 21px;
+    color: #696969;
+    margin: 0;
+    padding-right: 12px;
+  }
