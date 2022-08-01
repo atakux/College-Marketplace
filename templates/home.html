@@ -1,6 +1,16 @@
 {% extends "layout.html" %}
 {% block content %}
     <head><link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}"></head>
+    <div>
+        <br><br>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="notification is-danger">
+                    {{ messages[0] }}
+                </div>
+            {% endif %}
+        {% endwith %}
+    </div>
     <div class="background">
         {% if user_data == None %}
             <h1 class="welcome">Welcome to College Marketplace</h1>

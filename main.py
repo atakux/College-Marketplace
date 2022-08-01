@@ -2,9 +2,12 @@ import requests
 import googlemaps
 import os
 import bcrypt
+import smtplib
+import ssl
 import sqlalchemy as db
 
 from flask import Flask, redirect, jsonify, request, render_template, url_for, flash, session
+from flask_mail import Mail, Message
 from sqlalchemy import text
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker
@@ -13,9 +16,8 @@ from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
-import smtplib, ssl
 
-
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired
 
 Base = declarative_base()
 
@@ -31,7 +33,8 @@ if not inspector.has_table("user"):
         "`user_name` TEXT NOT NULL,"
         "`user_email` TEXT NOT NULL,"
         "`user_zip` TEXT NOT NULL,"
-        "`user_password` TEXT NOT NULL"
+        "`user_password` TEXT NOT NULL,"
+        "`user_status` INTEGER NOT NULL DEFAULT 0"
         ")")
 
 if not inspector.has_table("item"):
@@ -70,27 +73,36 @@ if not inspector.has_table("message"):
         "   REFERENCES user (user_id, user_id)"
         ")")
 
-#Flask
+# Flask
 app = Flask(__name__)
 API_KEY = os.environ['API_KEY']
 UPLOAD_FOLDER = 'static/images'
 app.config['SECRET_KEY'] = 'fec93d1b1cb7926beb25960608b25818'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USERNAME'] = 'collegemarketplace345@gmail.com'
+app.config['MAIL_PASSWORD'] = 'zglgrqyjjqlhaatw'
+app.config['MAIL_USE_TLS'] = False
+app.config['MAIL_USE_SSL'] = True
 map_client = googlemaps.Client(API_KEY)
 Session = sessionmaker(engine)
+
+mail = Mail(app)
+s = URLSafeTimedSerializer('secretcode')
 
 
 @app.route('/', methods=['POST', 'GET'])
 @app.route('/home', methods=['POST', 'GET'])
 def home():
-    '''
+    """
     use render template to load the data into whatever the template is
     This is the list of items page where each item is on display
-    '''
-    #Get User Data if Logged in
+    """
+    # Get User Data if Logged in
     user_data = get_login_user_data()
 
-    #Get item data
+    # Get item data
     results = None
     data = []
     with Session.begin() as sess:
@@ -98,27 +110,28 @@ def home():
         for r in results:
             r_dict = dict(r)
 
-            #Get Seller Name
+            # Get Seller Name
             seller_data = get_user_data_by_id(r_dict['seller_id'])
             r_dict['seller_name'] = seller_data['user_name']
             data.append(r_dict)
 
-            #Get Distance
+            # Get Distance
             """
-            distance_matrix = (requests.get(f"https://maps.googleapis.com/maps/api/distancematrix/json?destinations={user_data['user_zip']}&origins={seller_data['user_zip']}&units=imperial&key={API_KEY}")).json()
+            distance_matrix = 
+            (requests.get(f"https://maps.googleapis.com/maps/api/distancematrix/json?destinations={user_data['user_zip']}&origins={seller_data['user_zip']}&units=imperial&key={API_KEY}")).json()
             distance_miles = (distance_matrix['rows'][0]['elements'][0]['distance']['value'])//1609
             r_dict['distance'] = distance_miles
             """
             r_dict['distance'] = 10
-    
-    return render_template('home.html', item_list=data, user_data=user_data)    
+
+    return render_template('home.html', item_list=data, user_data=user_data)
 
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():
     user_data = get_login_user_data()
 
-    if user_data == None:
+    if user_data is None:
         if request.method == 'POST':
             email = request.form.get('email', 'default value email')
             password = request.form.get('password', 'default value password')
@@ -134,18 +147,19 @@ def login():
                     return redirect(url_for('home'))
                 else:
                     redirect(url_for('login'))
-                    flash("The username and/or password is incorrect, please try again.")
+                    flash("The username and/or password is incorrect, please try again.", category="is-danger")
             except Exception as ex:
                 redirect(url_for('login'))
-                flash("The username and/or password is incorrect, please try again.")
+                flash("The username and/or password is incorrect, please try again.", category="is-danger")
                 print("error" + str(ex))
         return render_template('signin.html')
     else:
         return redirect(url_for('home'))
 
+
 @app.route('/logout')
 def logout():
-    if get_login_user_data() != None:
+    if get_login_user_data() is not None:
         session.pop('user_id')
     return redirect(url_for('login'))
 
@@ -160,6 +174,7 @@ def get_user():
         for r in results:
             data.append(dict(r))
     return str(data)
+
 
 # for testing
 @app.route('/reviews')
@@ -181,15 +196,25 @@ def sign_up():
     will need an output from the template in order to add the new user to the database
     """
     user_data = get_login_user_data()
-    if user_data == None:
+    if user_data is None:
         if request.method == 'POST':
             user_name = request.form.get('userName', 'default value name')
             email = request.form.get('email', 'default value email')
             address = request.form.get('address', 'default address')
 
-            #Check for duplicate email/username
+            # Check for duplicate email/username
             dup_email = False
             dup_user_name = False
+
+            token = s.dumps(email, salt='email-confirm')
+            msg = Message('Confirm Email.', sender='collegemarketplace345@gmail.com', recipients=[email])
+            link = url_for('confirm_email', token=token, _external=True)
+            msg.body = 'Welcome to College Marketplace !! \n\n\n Click this link to verify your account: {} ' \
+                       '\n\n\nThank you! \nHappy shopping,\nCollege Marketplace ' \
+                       'Team'.format(link)
+
+            mail.send(msg)
+
             with Session.begin() as sess:
                 user_results = sess.execute(text('SELECT * FROM user WHERE user_email="{}"'.format(str(email))))
                 for ur in user_results:
@@ -198,11 +223,12 @@ def sign_up():
                 for ur in user_results:
                     dup_user_name = True
 
-            #Check for valid zip code
-            valid_zip = (requests.get(f'https://maps.googleapis.com/maps/api/geocode/json?address={address}&key={API_KEY}')).json()
+            # Check for valid zip code
+            valid_zip = (requests.get(
+                f'https://maps.googleapis.com/maps/api/geocode/json?address={address}&key={API_KEY}')).json()
             print()
-                
-            #Check edu
+
+            # Check edu
             if '.edu' not in email:
                 print("invalid email")
                 flash("You must input a school email.")
@@ -218,20 +244,35 @@ def sign_up():
             elif valid_zip['status'] == 'ZERO_RESULTS':
                 print("Invalid Zip")
                 flash(f"Zip code {address} is not valid, please use valid zip code.")
-                return render_template('signup.html') 
+                return render_template('signup.html')
             else:
-                #Hash Password
+                # Hash Password
                 password = request.form.get('password', 'default value password')
                 salt = bcrypt.gensalt()
                 hashed_pass = bcrypt.hashpw(bytes(password, encoding='utf8'), salt)
 
                 engine.execute("INSERT INTO user (user_name, user_email, user_zip, "
-                            "user_password) VALUES (?, ?, ?, ?);",
-                            (user_name, email, address, hashed_pass))
+                               "user_password) VALUES (?, ?, ?, ?);",
+                               (user_name, email, address, hashed_pass))
                 return redirect(url_for('login'))
         return render_template('signup.html')
     else:
         return redirect(url_for('home'))
+
+
+@app.route('/confirm_email/<token>', methods=['POST', 'GET'])
+def confirm_email(token):
+    try:
+        email = s.loads(token, salt='email-confirm', max_age=3600)
+        user_data = get_login_user_data()
+        if user_data is not None:
+            engine.execute("UPDATE user SET user_status = (?) WHERE user_id = (?);", (1, user_data['user_id']))
+        flash(f"Your email, '{email}', is verified !!", category="success")
+        return redirect(url_for('login'))
+    except SignatureExpired:
+        display_error()
+    finally:
+        return redirect(url_for('login'))
 
 
 @app.route('/buy_sell', methods=['GET', 'POST'])
@@ -240,8 +281,28 @@ def buy_sell():
     '''
     Display buy or sell page
     '''
-    if user_data != None:
-        return render_template('buy_or_sell_page.html')
+    if user_data is not None:
+        uid = user_data['user_id']
+
+        with Session.begin() as session:
+            email_results = session.execute(text("SELECT user_email FROM user WHERE user_id = {}".format(uid)))
+            emails = {}
+            values = []
+            for e in email_results:
+                emails = dict(e)
+
+            for key, val in emails.items():
+                values.append(val)
+
+            print(values)
+
+            user_data = get_login_user_data()
+            if user_data['user_status'] == 1:
+                print("LESGO")
+            else:
+                print("you stinky")
+
+            return render_template('buy_or_sell_page.html')
     else:
         return redirect(url_for('login'))
 
@@ -252,22 +313,26 @@ def get_item(id: int):
     item_data = {}
     seller_data = {}
 
-    if user_data != None:
+    if user_data is not None:
         with Session.begin() as session:
             item_results = session.execute(text('select * from item where item_id={}'.format(id)))
             for ir in item_results:
                 item_data = dict(ir)
         seller_data = get_user_data_by_id(item_data['seller_id'])
 
-        #Get place ids for locations
-        user_place_id = (requests.get(f"https://maps.googleapis.com/maps/api/geocode/json?address={user_data['user_zip']}&key={API_KEY}")).json()
+        # Get place ids for locations
+        user_place_id = (requests.get(
+            f"https://maps.googleapis.com/maps/api/geocode/json?address={user_data['user_zip']}&key={API_KEY}")).json()
         user_place_id = user_place_id['results'][0]["place_id"]
-        seller_place_id = (requests.get(f"https://maps.googleapis.com/maps/api/geocode/json?address={seller_data['user_zip']}&key={API_KEY}")).json()
+        seller_place_id = (requests.get(
+            f"https://maps.googleapis.com/maps/api/geocode/json?address={seller_data['user_zip']}&key={API_KEY}")).json()
         seller_place_id = seller_place_id['results'][0]["place_id"]
-        distance_matrix = (requests.get(f"https://maps.googleapis.com/maps/api/distancematrix/json?destinations={user_data['user_zip']}&origins={seller_data['user_zip']}&units=imperial&key={API_KEY}")).json()
-        distance_miles = (distance_matrix['rows'][0]['elements'][0]['distance']['value'])//1609
+        distance_matrix = (requests.get(
+            f"https://maps.googleapis.com/maps/api/distancematrix/json?destinations={user_data['user_zip']}&origins={seller_data['user_zip']}&units=imperial&key={API_KEY}")).json()
+        distance_miles = (distance_matrix['rows'][0]['elements'][0]['distance']['value']) // 1609
 
-        return render_template('itempage.html', item=item_data, seller=seller_data, user_zip=user_place_id, seller_zip=seller_place_id, distance=distance_miles, API_KEY=API_KEY)
+        return render_template('itempage.html', item=item_data, seller=seller_data, user_zip=user_place_id,
+                               seller_zip=seller_place_id, distance=distance_miles, API_KEY=API_KEY)
     else:
         return redirect(url_for('login'))
 
@@ -277,7 +342,7 @@ def user(seller_id: str):
     user_data = get_login_user_data()
     seller_data = None
 
-    #Get Seller Data
+    # Get Seller Data
     seller_data = get_user_data_by_id(seller_id)
 
     if seller_data != None:
@@ -285,7 +350,6 @@ def user(seller_id: str):
     else:
         return render_template('error.html')
 
-    
 
 @app.route('/send_email/<seller_id>', methods=['POST', 'GET'])
 def send_email(seller_id: str):
@@ -294,59 +358,63 @@ def send_email(seller_id: str):
     seller_data = {}
     buyer_data = {}
 
-    if user_data != None:
-        #Get Data
+    if user_data is not None:
+        # Get Data
         seller_data = get_user_data_by_id(seller_id)
         buyer_data = get_user_data_by_id(user_data['user_id'])
-            
-        if request.method == 'POST':
-            #Send Email
-            #https://realpython.com/python-send-email/#option-1-setting-up-a-gmail-account-for-development
-            subject = request.form.get('subject', '')
-            message_text = request.form.get('message', '')
 
-            sender_email = "collegemarketplace345@gmail.com"
-            sender_password = "toubticyusplqrnd"
-            receiver_email = seller_data['user_email']
+        if user_data['user_status'] == 1:
+            if request.method == 'POST':
+                # Send Email
+                # https://realpython.com/python-send-email/#option-1-setting-up-a-gmail-account-for-development
+                subject = request.form.get('subject', '')
+                message_text = request.form.get('message', '')
 
-            message = MIMEMultipart("alternative")
-            message["Subject"] = f"CMP Message from {buyer_data['user_name']} - {subject}" 
-            message["From"] = sender_email
-            message["To"] = receiver_email
+                sender_email = "collegemarketplace345@gmail.com"
+                sender_password = "toubticyusplqrnd"
+                receiver_email = seller_data['user_email']
 
-            # Create the plain-text and HTML version of your message
-            text = message_text
-            html = """\
-            <html>
-            <body>
-                <p>{}</p>
-                <br>
-                <p>To reply, please click this link: <a href="" target="_blank_"></a></p>
-            </body>
-            </html>
-            """.format(message_text.replace('\n', "<br>"))
-            print(text)
-            print(html)
+                message = MIMEMultipart("alternative")
+                message["Subject"] = f"CMP Message from {buyer_data['user_name']} - {subject}"
+                message["From"] = sender_email
+                message["To"] = receiver_email
 
-            # Turn these into plain/html MIMEText objects
-            part1 = MIMEText(text, "plain")
-            part2 = MIMEText(html, "html")
+                # Create the plain-text and HTML version of your message
+                text = message_text
+                html = """\
+                <html>
+                <body>
+                    <p>{}</p>
+                    <br>
+                    <p>To reply, please click this link: <a href="" target="_blank_"></a></p>
+                </body>
+                </html>
+                """.format(message_text.replace('\n', "<br>"))
+                print(text)
+                print(html)
 
-            # Add HTML/plain-text parts to MIMEMultipart message
-            # The email client will try to render the last part first
-            message.attach(part1)
-            message.attach(part2)
+                # Turn these into plain/html MIMEText objects
+                part1 = MIMEText(text, "plain")
+                part2 = MIMEText(html, "html")
 
-            # Create secure connection with server and send email
-            context = ssl.create_default_context()
-            with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
-                server.login(sender_email, sender_password)
-                server.sendmail(
-                    sender_email, receiver_email, message.as_string()
-                )
+                # Add HTML/plain-text parts to MIMEMultipart message
+                # The email client will try to render the last part first
+                message.attach(part1)
+                message.attach(part2)
+
+                # Create secure connection with server and send email
+                context = ssl.create_default_context()
+                with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
+                    server.login(sender_email, sender_password)
+                    server.sendmail(
+                        sender_email, receiver_email, message.as_string()
+                    )
+                return redirect(url_for('home'))
+            else:
+                return render_template('send_email.html', seller_data=seller_data, buyer_data=buyer_data)
+        elif user_data['user_status'] == 0:
+            flash('You must verify your email to do this action')
             return redirect(url_for('home'))
-        else:
-            return render_template('send_email.html', seller_data=seller_data, buyer_data=buyer_data)
     else:
         return redirect(url_for('login'))
 
@@ -354,26 +422,30 @@ def send_email(seller_id: str):
 @app.route('/send_report/<int:id>')
 def send_report(id: int):
     user_data = get_login_user_data()
-    if user_data != None:
-        reported_data = get_user_data_by_id(id)
-        smtp = smtplib.SMTP('smtp.gmail.com', 587)
-        smtp.ehlo()
-        smtp.starttls()
-        msg = MIMEMultipart()
-        msg['Subject'] = "User {} has been reported!!".format(reported_data["user_name"])
-        # Login with your email and password
-        smtp.login('collegemarketplace345@gmail.com', 'toubticyusplqrnd')
-        
-        # message to be sent
-        txt = "{} has reported {}".format(user_data, reported_data)
-        msg.attach(MIMEText(txt))
-        
-        # sending the mail
-        smtp.sendmail("collegemarketplace345@gmail.com", "collegemarketplace345@gmail.com", msg.as_string())
-        
-        # Finally, don't forget to close the connection
-        smtp.quit()
-        return "report sent!!"
+    if user_data is not None:
+        if user_data['user_status'] == 1:
+            reported_data = get_user_data_by_id(id)
+            smtp = smtplib.SMTP('smtp.gmail.com', 587)
+            smtp.ehlo()
+            smtp.starttls()
+            msg = MIMEMultipart()
+            msg['Subject'] = "User {} has been reported!!".format(reported_data["user_name"])
+            # Login with your email and password
+            smtp.login('collegemarketplace345@gmail.com', 'toubticyusplqrnd')
+
+            # message to be sent
+            txt = "{} has reported {}".format(user_data, reported_data)
+            msg.attach(MIMEText(txt))
+
+            # sending the mail
+            smtp.sendmail("collegemarketplace345@gmail.com", "collegemarketplace345@gmail.com", msg.as_string())
+
+            # Finally, don't forget to close the connection
+            smtp.quit()
+            return "report sent!!"
+        elif user_data['user_status'] == 0:
+            flash("You must verify your email to do this action")
+            return redirect(url_for('home'))
     else:
         return redirect(url_for('login'))
 
@@ -381,20 +453,23 @@ def send_report(id: int):
 @app.route('/review/<int:id>', methods=["GET", "POST"])
 def submit_review(id: int):
     user_data = get_login_user_data()
-    if user_data != None:
-        connection = None
-        id_num = 0
-        if user_data is None:
-            return redirect(url_for('error'))
-        if request.method == 'POST':
-            score = request.form.get('score', 'default score')
-            rev_content = request.form.get('reviewContent', 'default content')
-            engine.execute("INSERT INTO review (review_score, review_text, seller_id, user_id) "
-            "VALUES (?, ?, ?, ?);", (int(score), rev_content, id, user_data["user_id"]))
-        return render_template('review.html')
+    if user_data is not None:
+        if user_data['user_status'] == 1:
+            connection = None
+            id_num = 0
+            if user_data is None:
+                return redirect(url_for('error'))
+            if request.method == 'POST':
+                score = request.form.get('score', 'default score')
+                rev_content = request.form.get('reviewContent', 'default content')
+                engine.execute("INSERT INTO review (review_score, review_text, seller_id, user_id) "
+                               "VALUES (?, ?, ?, ?);", (int(score), rev_content, id, user_data["user_id"]))
+            return render_template('review.html')
+        elif user_data['user_status'] == 0:
+            flash('You must verify your email to do this action')
+            return redirect(url_for('home'))
     else:
         return redirect(url_for('login'))
-
 
 
 @app.route('/sell', methods=['POST', 'GET'])
@@ -408,80 +483,87 @@ def sell_item():
     if request.method == 'POST':
         user = request.form
         return 'adding item please wait a moment'''
-    if user_data != None:
-        if request.method == 'POST':
-            #Get Data
-            item_name = request.form.get('name', 'default item name')
-            price = request.form.get('price', 'default price')
-            description = request.form.get('itemDesc', 'default description')
+    if user_data is not None:
+        if user_data['user_status'] == 1:
+            if request.method == 'POST':
+                # Get Data
+                item_name = request.form.get('name', 'default item name')
+                price = request.form.get('price', 'default price')
+                description = request.form.get('itemDesc', 'default description')
 
-            #Commit to Databse
-            engine.execute("INSERT INTO item (item_name, item_price, item_description, seller_id, active) "
-            "VALUES (?, ?, ?, ?, ?);", (item_name, price, description, user_data['user_id'], 1))
+                # Commit to Databse
+                engine.execute("INSERT INTO item (item_name, item_price, item_description, seller_id, active) "
+                               "VALUES (?, ?, ?, ?, ?);", (item_name, price, description, user_data['user_id'], 1))
 
-            id_num = 0
-            try:
-                connection = engine.connect()
-                cursor = connection.execute("SELECT count(*) from item;")
-                result = cursor.scalar()
-                id_num = int(result)
-            except:
-                print("something went wrong")
-            finally:
-                if not connection.closed:
-                    cursor.close()
-                    connection.close()
-            
-            print(id_num)
+                id_num = 0
+                try:
+                    connection = engine.connect()
+                    cursor = connection.execute("SELECT count(*) from item;")
+                    result = cursor.scalar()
+                    id_num = int(result)
+                except:
+                    print("something went wrong")
+                finally:
+                    if not connection.closed:
+                        cursor.close()
+                        connection.close()
 
+                print(id_num)
 
-            photo = request.files['photo']
-            filename = '{}.png'.format(id_num)
+                photo = request.files['photo']
+                filename = '{}.png'.format(id_num)
 
-            photo.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                photo.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                return redirect(url_for('home'))
+            return render_template('post_item.html')
+        elif user_data['user_status'] == 0:
+            flash('You must verify your email to do this action')
             return redirect(url_for('home'))
-        return render_template('post_item.html')
     else:
         return redirect(url_for('login'))
 
 
 @app.route('/chat/<int:id>', methods=['POST', 'GET'])
 def message(id: int):
-
     user_data = get_login_user_data()
-    if user_data != None:
-        msg_data = {}
-        if request.method == 'POST':
-            msg_content = request.form.get('messageContent', 'default content')
-            engine.execute("INSERT INTO message (sender_id, receiver_id, message_content) VALUES (?, ?, ?);", 
-            (user_data["user_id"], id, msg_content))
+    if user_data is not None:
+        if user_data['user_status'] == 1:
+            msg_data = {}
+            if request.method == 'POST':
+                msg_content = request.form.get('messageContent', 'default content')
+                engine.execute("INSERT INTO message (sender_id, receiver_id, message_content) VALUES (?, ?, ?);",
+                               (user_data["user_id"], id, msg_content))
 
-        with Session.begin() as session:
-            msg_results = session.execute(text("SELECT message_content FROM message WHERE receiver_id "
-                                               "= {} ".format(user_data['user_id'])))
-            sender_results = session.execute(text("SELECT user_name FROM user WHERE user_id = "
-                                                  "{}".format(id)))
-            receiver_results = session.execute(text("SELECT user_name FROM user WHERE user_id = "
-                                                    "{}".format(user_data['user_id'])))
-            senders = {}
-            receivers = {}
-            for msg in msg_results:
-                msg_data = dict(msg)
-            for sends in sender_results:
-                senders = dict(sends)
-            for recs in receiver_results:
-                receivers = dict(recs)
-            values = []
-            for key, val in msg_data.items():
-                values.append(val)
-            for key, val in senders.items():
-                the_sender = val
-            for key, val in receivers.items():
-                the_receiver = val
-            print(values)
-            print(senders)
-        return render_template('message.html', receiver=the_receiver, sender=the_sender, messages=values)
+            with Session.begin() as session:
+                msg_results = session.execute(text("SELECT message_content FROM message WHERE receiver_id "
+                                                   "= {} ".format(user_data['user_id'])))
+                sender_results = session.execute(text("SELECT user_name FROM user WHERE user_id = "
+                                                      "{}".format(id)))
+                receiver_results = session.execute(text("SELECT user_name FROM user WHERE user_id = "
+                                                        "{}".format(user_data['user_id'])))
+                senders = {}
+                receivers = {}
+                for msg in msg_results:
+                    msg_data = dict(msg)
+                for sends in sender_results:
+                    senders = dict(sends)
+                for recs in receiver_results:
+                    receivers = dict(recs)
+                values = []
+                for key, val in msg_data.items():
+                    values.append(val)
+                for key, val in senders.items():
+                    the_sender = val
+                for key, val in receivers.items():
+                    the_receiver = val
+                print(values)
+                print(senders)
+            return render_template('message.html', receiver=the_receiver, sender=the_sender, messages=values)
+        elif user_data['user_status'] == 0:
+            flash('You must verify your email to do this action')
+            return redirect(url_for('home'))
     return render_template('message.html')
+
 
 @app.route('/error')
 def display_error():
@@ -495,6 +577,7 @@ def get_login_user_data():
         return user_data
     except:
         return None
+
 
 def get_user_data_by_id(id):
     with Session.begin() as sess:
