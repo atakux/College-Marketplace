@@ -1,0 +1,1 @@
+This is literally only here to make sure the image folder gets created.

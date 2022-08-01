@@ -97,12 +97,22 @@
     display: inline-block;
 }
 
+.btn-wrapper label {
+    text-decoration: none;
+    background-color: var(--dodger-blue);
+    color: var(--alabaster);
+    border: none;
+    border-radius: 12px;
+    outline: none;
+    cursor: pointer;
+    font-size: 17px;
+    font-weight: 500;
+    padding: 5px 20px;
+    cursor: pointer;
+}
+
 .btn-wrapper input[type=file] {
-    font-size: 100px;
-    position: absolute;
-    left: 0;
-    top: 0;
-    opacity: 0;
+    display: none;
 }
 
 button {
@@ -123,7 +133,7 @@ input {
     margin-top: 10px;
     font-size: 14px;
     margin-bottom: 20px;
-    width: 60%;
+    width: 90%;
     border: 1.5px solid var(--silver);
     border-radius: 10px;
     padding: 10px 15px;
