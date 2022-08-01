@@ -455,13 +455,12 @@ def view_all_messages():
     if user_data is not None:
         if request.method == 'GET':
             with sqlal_session_gen.begin() as generated_session:
-                users_current_sent_to_results = generated_session.execute(text("SELECT receiver_id FROM ("
-                    "SELECT receiver_id, max(message_id) FROM (SELECT receiver_id, message_id, sender_id FROM message WHERE sender_id={}) z "
+                users_current_sent_to_results = generated_session.execute(text("SELECT receiver_id, "
+                "max(message_id) FROM (SELECT receiver_id, message_id, sender_id FROM message WHERE sender_id={}) z "
                     " GROUP BY receiver_id "
-                    "ORDER BY message_id desc"
-                    ") t ".format(user_data["user_id"])))
+                    "ORDER BY message_id desc".format(user_data["user_id"])))
                 for ucstr in users_current_sent_to_results:
-                    users_current_sent_to_data.append(int(ucstr['receiver_id']))
+                    users_current_sent_to_data.append(dict(ucstr))
                 print(users_current_sent_to_data)
 
             with sqlal_session_gen.begin() as generated_session:
@@ -473,7 +472,7 @@ def view_all_messages():
                 print(users_current_got_from_results)
                 for ucgfr in users_current_got_from_results:
                     print(ucgfr)
-                    users_current_got_from_data.append(int(ucgfr['sender_id']))
+                    users_current_got_from_data.append(dict(ucgfr))
                 print(users_current_got_from_data)
                 
             users_current_commed_with.extend(users_current_sent_to_data)
@@ -495,7 +494,9 @@ def message(id: int):
             for oud in other_user_results:
                 other_user_data = dict(oud)
         with sqlal_session_gen.begin() as generated_session:
-            message_results = generated_session.execute(text('select * from message where sender_id={} or receiver_id={}'.format(user_data['user_id'], user_data['user_id'])))
+            message_results = generated_session.execute(text("select * from message where "
+            "(sender_id={} and receiver_id={}) or (sender_id={} and receiver_id={})".format(user_data['user_id'],
+            other_user_data['user_id'], other_user_data['user_id'], user_data['user_id'])))
             for mr in message_results:
                 list_of_messages.append(dict(mr))
         if request.method == 'POST':
