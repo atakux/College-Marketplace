@@ -91,6 +91,8 @@ Session = sessionmaker(engine)
 mail = Mail(app)
 s = URLSafeTimedSerializer('secretcode')
 
+verified = False
+
 @app.route('/', methods=['POST', 'GET'])
 @app.route('/home', methods=['POST', 'GET'])
 def home():
@@ -129,7 +131,7 @@ def home():
 def login():
     user_data = get_login_user_data()
 
-    if user_data == None:
+    if user_data is None:
         if request.method == 'POST':
             email = request.form.get('email', 'default value email')
             password = request.form.get('password', 'default value password')
@@ -145,10 +147,10 @@ def login():
                     return redirect(url_for('home'))
                 else:
                     redirect(url_for('login'))
-                    flash("The username and/or password is incorrect, please try again.")
+                    flash("The username and/or password is incorrect, please try again.", category="is-danger")
             except Exception as ex:
                 redirect(url_for('login'))
-                flash("The username and/or password is incorrect, please try again.")
+                flash("The username and/or password is incorrect, please try again.", category="is-danger")
                 print("error" + str(ex))
         return render_template('signin.html')
     else:
@@ -156,7 +158,7 @@ def login():
 
 @app.route('/logout')
 def logout():
-    if get_login_user_data() != None:
+    if get_login_user_data() is not None:
         session.pop('user_id')
     return redirect(url_for('login'))
 
@@ -192,7 +194,7 @@ def sign_up():
     will need an output from the template in order to add the new user to the database
     """
     user_data = get_login_user_data()
-    if user_data == None:
+    if user_data is None:
         if request.method == 'POST':
             user_name = request.form.get('userName', 'default value name')
             email = request.form.get('email', 'default value email')
@@ -205,7 +207,9 @@ def sign_up():
             token = s.dumps(email, salt='email-confirm')
             msg = Message('Confirm Email.', sender='collegemarketplace345@gmail.com', recipients=[email])
             link = url_for('confirm_email', token=token, _external=True)
-            msg.body = 'Your link is {}. Your token is {}.'.format(link, token)
+            msg.body = 'Welcome to College Marketplace !! \n\n\n Click this link to verify your account: {} ' \
+                       '\n\n Also, your token is {}. \n\n\nThank you! \nHappy shopping,\nCollege Marketplace ' \
+                       'Team'.format(link, token)
 
             mail.send(msg)
 
@@ -255,12 +259,15 @@ def sign_up():
 
 @app.route('/confirm_email/<token>')
 def confirm_email(token):
+    global verified
     try:
         email = s.loads(token, salt='email-confirm', max_age=3600)
     except SignatureExpired:
-        return '<h1>The token is expired!</h1>'
-    return '<h1>The token works!</h1>'
-
+        verified = False
+        display_error()
+    verified = True
+    flash(f"Your email, '{email}', is verified !!", category="success")
+    return render_template('signin.html')
 
 @app.route('/buy_sell', methods=['GET', 'POST'])
 def buy_sell():
@@ -268,8 +275,26 @@ def buy_sell():
     '''
     Display buy or sell page
     '''
-    if user_data != None:
-        return render_template('buy_or_sell_page.html')
+    if user_data is not None:
+        uid = user_data['user_id']
+
+        with Session.begin() as session:
+            email_results = session.execute(text("SELECT user_email FROM user WHERE user_id = {}".format(uid)))
+            emails = {}
+            values = []
+            for e in email_results:
+                emails = dict(e)
+
+            for key, val in emails.items():
+                values.append(val)
+
+            print(values)
+
+            if confirm_email(values[0]) == 'True':
+                print("LESGO")
+            else:
+                print("you stinky")
+            return render_template('buy_or_sell_page.html')
     else:
         return redirect(url_for('login'))
 
