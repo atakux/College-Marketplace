@@ -11,12 +11,12 @@
   font-family: "Poppins";
 }
 
-#display_image{
-    width: 375px;
-    height: 211px;
-    border: 1px solid black;
-    background-position: center;
-    background-size: cover;
+#display_image {
+  width: 375px;
+  height: 211px;
+  border: 1px solid black;
+  background-position: center;
+  background-size: cover;
 }
 
 html,
@@ -47,6 +47,11 @@ footer div {
   margin-top: 60px;
 }
 
+img {
+  width: 24px;
+  height: 24px;
+}
+
 .navbar {
   align-items: flex-end;
   max-width: 87vw;
@@ -54,6 +59,59 @@ footer div {
   display: flex;
   margin: auto;
   margin-top: 60px;
+}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+  width: 45px;
+  height: 45px;
+  margin-bottom: 14.5px;
+  background: var(--dodger-blue);
+  border-radius: 50%;
+}
+
+.dropdown-content {
+  visibility: hidden;
+  opacity: 0;
+  right: 0;
+  position: absolute;
+  padding: 12px 14px;
+  background-color: var(--alabaster);
+  border-radius: 8px;
+  border: 1.5px var(--silver) solid;
+  margin-top: 56px;
+  z-index: 1;
+  transition: 0.2s;
+}
+
+.dropdown-content:after {
+  content: "";
+  position: absolute;
+  margin-top: -67%;
+  left: 79%;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid var(--silver);
+}
+
+.dropdown:hover .dropdown-content {
+  visibility: visible;
+  opacity: 1;
+}
+
+.drop-btn {
+  display: inline-block;
+  color: var(--bastille);
+  font-size: 19px;
+  font-weight: 420;
+  cursor: pointer;
+}
+
+.drop-btn:hover {
+  color: var(--dodger-blue);
 }
 
 .title {
@@ -74,40 +132,40 @@ footer div {
 }
 
 .search:focus {
-    outline: 1px solid var(--dodger-blue);
+  outline: 1px solid var(--dodger-blue);
 }
 
 .button {
-    background-color: var(--dodger-blue);
-    border-radius: 12px;
-    border: 0;
-    padding: 7px 20px;
-    font-size: 18px;
-    font-weight: 500;
-    color: var(--alabaster);
-    cursor: pointer;
-  }
+  background-color: var(--dodger-blue);
+  border-radius: 12px;
+  border: 0;
+  padding: 7px 20px;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--alabaster);
+  cursor: pointer;
+}
 
 .button.back {
-    color: var(--dodger-blue);
+  color: var(--dodger-blue);
 }
 
 .button.back:hover {
-    background-color: var(--dodger-blue);
-    color: var(--alabaster);
+  background-color: var(--dodger-blue);
+  color: var(--alabaster);
 }
 
 textarea .area {
-    padding: 10px;
-    max-width: 100%;
-    resize: none;
-    margin: 0 10px -150px;
-    text-align: justify;
+  padding: 10px;
+  max-width: 100%;
+  resize: none;
+  margin: 0 10px -150px;
+  text-align: justify;
 }
 
 textarea {
-    padding: 10px;
-    max-width: 100%;
+  padding: 10px;
+  max-width: 100%;
 
-    text-align: justify;
+  text-align: justify;
 }
