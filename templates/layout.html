@@ -18,10 +18,12 @@
         {% if user_data == None %}
             <button class="button" onclick="location.href='/login';">Login/Signup</button>
         {% else %}
-            <div>
-                <button class="button" onclick="location.href='/manage';">Dashboard</button>
-                <button class="button" onclick="location.href='/sell';">List Item</button>
-                <button class="button" onclick="location.href='/logout';">Logout</button>
+            <div class="dropdown">
+                <div class="dropdown-content">
+                    <div class="drop-btn" onclick="location.href='/manage';">Dashboard</div>
+                    <div class="drop-btn" style="padding-bottom: 7px; padding-top: 7px;" onclick="location.href='/sell';">List Item</div>
+                    <div class="drop-btn" onclick="location.href='/logout';">Logout</div>
+                </div>
             </div>
         {% endif %}
     </div>
