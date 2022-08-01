@@ -430,6 +430,7 @@ def message(id: int):
 def display_error():
     return render_template('error.html')
 
+
 def is_logged_in():
     global user_data
     """Checks to see if user is logged in. If so, returns true. If not, returns false"""

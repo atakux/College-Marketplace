@@ -100,6 +100,36 @@ footer div {
 textarea {
     padding: 10px;
     max-width: 100%;
-
+    resize: none;
+    margin: 0 10px -150px;
     text-align: justify;
+}
+
+.received_messages_header {
+    margin: 0 0 -100px -90px;
+    padding: 100px;
+    text-align: justify;
+    resize: none;
+}
+
+.user_button {
+    float: left;
+    text-align: left;
+    background-color: #F0F8FF;
+    border-radius: 4px;
+    border: 4;
+    font-size: 16px;
+    font-weight: 400;
+    color: #000000;
+    cursor: pointer;
+    width: 575px;
+    height: 100px;
+}
+
+.side_panel {
+    float: right;
+    width: 650px;
+    height: 200px;
+    border: 4;
+    background-color: #E0FFFF;
 }
