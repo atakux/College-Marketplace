@@ -20,7 +20,7 @@
         <div class="details">
             <div class="item-name">{{ item['item_name'] }} </div>
             <div class="price"><p class="tag">Price:</p> ${{ item['item_price'] }}</div>
-            <button style="font-size: 22px;" class="button" type="submit" id="btn"><a href="/send_email/{{ seller['user_email'] }}">Purchase</a></button>
+            <button style="font-size: 22px;" class="button" type="submit" id="btn"><a href="/send_email/{{ seller['user_id'] }}">Message Seller</a></button>
         </div>
     </div>
 
@@ -36,10 +36,13 @@
         <div class="seller">
             <h2>Seller Information</h2>
 
-            <h3>Name: <label>{{ seller['user_name'] }}</label> </h3>
-            <h3>Email: <label>{{ seller['user_email'] }}</label> </h3>
-
-            <h3>Distance from seller: <label>{{ distance }}</label> </h3>
+            <h3>Username: <label>{{ seller['user_name'] }}</label> </h3>
+            <!--<h3>Email: <label>{{ seller['user_email'] }}</label> </h3>-->
+            {% if distance == 0 %}
+                <h3>Approximate distance: <label>Right around the corner</label> </h3>
+            {% else %}
+                <h3>Approximate distance: <label>{{ distance }} miles</label> </h3>
+            {% endif %}
         </div>
         
     </div>

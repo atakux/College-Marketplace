@@ -223,8 +223,10 @@ def get_item(id: int):
         user_place_id = user_place_id['results'][0]["place_id"]
         seller_place_id = (requests.get(f"https://maps.googleapis.com/maps/api/geocode/json?address={seller_data['user_zip']}&key={API_KEY}")).json()
         seller_place_id = seller_place_id['results'][0]["place_id"]
+        distance_matrix = (requests.get(f"https://maps.googleapis.com/maps/api/distancematrix/json?destinations={user_data['user_zip']}&origins={seller_data['user_zip']}&units=imperial&key={API_KEY}")).json()
+        distance_miles = (distance_matrix['rows'][0]['elements'][0]['distance']['value'])//1609
 
-        return render_template('itempage.html', item=item_data, seller=seller_data, user_zip=user_place_id, seller_zip=seller_place_id, API_KEY=API_KEY)
+        return render_template('itempage.html', item=item_data, seller=seller_data, user_zip=user_place_id, seller_zip=seller_place_id, distance=distance_miles, API_KEY=API_KEY)
     else:
         return redirect('/login')
 
