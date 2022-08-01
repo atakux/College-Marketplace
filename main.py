@@ -94,25 +94,39 @@ def home():
     results = None
     data = []
     with Session.begin() as sess:
-        results = sess.execute(text('select * from item'))
+        results = sess.execute(text('SELECT * FROM item ORDER BY item_id DESC LIMIT 9'))
         for r in results:
             r_dict = dict(r)
 
             #Get Seller Name
             seller_data = get_user_data_by_id(r_dict['seller_id'])
             r_dict['seller_name'] = seller_data['user_name']
+            r_dict['zip_code'] = seller_data['user_zip']
             data.append(r_dict)
-
-            #Get Distance
-            """
-            distance_matrix = (requests.get(f"https://maps.googleapis.com/maps/api/distancematrix/json?destinations={user_data['user_zip']}&origins={seller_data['user_zip']}&units=imperial&key={API_KEY}")).json()
-            distance_miles = (distance_matrix['rows'][0]['elements'][0]['distance']['value'])//1609
-            r_dict['distance'] = distance_miles
-            """
-            r_dict['distance'] = 10
     
-    return render_template('home.html', item_list=data, user_data=user_data)    
+    return render_template('home.html', item_list=data, user_data=user_data, search_query=None)    
 
+@app.route('/search/<query>')
+def search(query:str):
+    #Get User Data if Logged in
+    user_data = get_login_user_data()
+
+    #Get item data
+    results = None
+    data = []
+    with Session.begin() as sess:
+        results = sess.execute(text('SELECT * FROM item ORDER BY item_id DESC'))
+        for r in results:
+            r_dict = dict(r)
+
+            #Check Query
+            if query.lower() in r_dict['item_name'].lower():
+                seller_data = get_user_data_by_id(r_dict['seller_id'])
+                r_dict['seller_name'] = seller_data['user_name']
+                r_dict['zip_code'] = seller_data['user_zip']
+                data.append(r_dict)
+    
+    return render_template('home.html', item_list=data, user_data=user_data, search_query=query)    
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():
