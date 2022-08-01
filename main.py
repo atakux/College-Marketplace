@@ -231,7 +231,7 @@ def sign_up():
                 return redirect(url_for('login'))
         return render_template('signup.html')
     else:
-        return redirect('buy_sell')
+        return redirect(url_for('home'))
 
 
 @app.route('/buy_sell', methods=['GET', 'POST'])
