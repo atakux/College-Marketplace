@@ -1,16 +1,16 @@
 {% extends "layout.html" %}
 {% block content %}
-    <form method="POST">
-        <label for="message content">Message Content</label>
-            <div>
-                <textarea name="messageContent" id="message content"></textarea>
-            </div>
-        <div class="input-field button">
-            <button class="input-field button" type="submit" id="btn">Send</button>
-        </div>
-    </form>
-    <br>
-    <br>
-    <br>
-    <h1>Messages you have received</h1>
+     <form method="POST">
+         <div>
+            <textarea name="messageContent" id="message content" placeholder="Send a message to {{ receiver }}..."></textarea>
+         </div>
+         <br><br><br><br><br><br><br>
+         <div class="input-field button">
+             <button class="input-field button" type="submit" id="btn">Send</button>
+         </div>
+     </form>
+     <h1>Messages you have received</h1>
+      {% for message in messages %}
+            <p>message from {{ sender }}: {{ message }} </p>
+      {% endfor %}
 {% endblock content %}
