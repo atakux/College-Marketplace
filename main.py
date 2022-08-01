@@ -455,29 +455,44 @@ def view_all_messages():
     if user_data is not None:
         if request.method == 'GET':
             with sqlal_session_gen.begin() as generated_session:
-                users_current_sent_to_results = generated_session.execute(text("SELECT receiver_id, "
-                "max(message_id) FROM (SELECT receiver_id, message_id, sender_id FROM message WHERE sender_id={}) z "
-                    " GROUP BY receiver_id "
+                users_current_sent_to_results = generated_session.execute(text("SELECT receiver_id AS important_id, "
+                    "max(message_id) AS message_num, message_content FROM (SELECT receiver_id, message_id, sender_id, message_content FROM message WHERE sender_id={}) z "
+                    " GROUP BY important_id "
                     "ORDER BY message_id desc".format(user_data["user_id"])))
                 for ucstr in users_current_sent_to_results:
                     users_current_sent_to_data.append(dict(ucstr))
                 print(users_current_sent_to_data)
 
             with sqlal_session_gen.begin() as generated_session:
-                users_current_got_from_results = generated_session.execute(text("SELECT sender_id FROM ("
-                    "SELECT sender_id, max(message_id) FROM (SELECT receiver_id, message_id, sender_id FROM message WHERE receiver_id={}) z"
-                    " GROUP BY sender_id "
-                    "ORDER BY message_id desc"
-                    ") t ".format(user_data["user_id"])))
+                users_current_got_from_results = generated_session.execute(text("SELECT sender_id AS important_id, "
+                    "max(message_id) AS message_num, message_content FROM (SELECT receiver_id, message_id, sender_id, message_content FROM message WHERE receiver_id={}) z"
+                    " GROUP BY important_id "
+                    "ORDER BY message_id desc".format(user_data["user_id"])))
                 print(users_current_got_from_results)
                 for ucgfr in users_current_got_from_results:
                     print(ucgfr)
                     users_current_got_from_data.append(dict(ucgfr))
                 print(users_current_got_from_data)
-                
+            
+
             users_current_commed_with.extend(users_current_sent_to_data)
             users_current_commed_with.extend(users_current_got_from_data)
-        return render_template('message.html', users_list=users_current_commed_with)
+            data = sorted(users_current_commed_with, key=lambda x:x['message_num'], reverse=True)
+            print(data)
+            data_dict = {}
+            dupe_indices = []
+            for index in range(len(data)):
+                if data[index]['important_id'] in data_dict.keys():
+                    dupe_indices.append(index)
+                else:
+                    data_dict[data[index]['important_id']] = data[index]['message_num']
+            print("dict of data: {}".format(data_dict))
+            print("indice of duplicates: {}".format(dupe_indices))
+            print("data: {}".format(data))
+            dupe_list = reversed(dupe_indices)
+            for dupe in dupe_list:
+                data.pop(dupe)
+        return render_template('message.html', users_list=data)
     else:
         return redirect('/login')
 
