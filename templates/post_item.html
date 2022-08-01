@@ -1,11 +1,7 @@
 {% extends "layout.html" %}
 {% block content %}
     <head><link rel="stylesheet" href="{{ url_for('static', filename='css/create_item.css') }}"></head>
-    <div class="menu">
-        <div class="dashboard">Dashboard</div>
-        <button class="button back" onclick="location.href='/home';">Back</button>
-        <button class="button create-item" onclick="location.href='/sell';">Create Item</button>
-    </div>
+    {% include "dashboard.html" %}
     <form method="POST" enctype="multipart/form-data">
         <div class="container">
             <div class="card">
