@@ -102,8 +102,8 @@ def home():
             r_dict = dict(r)
             r_dict['seller_name'] = get_seller_name_by_id(r_dict['seller_id'])
             data.append(r_dict)
-    
-    return render_template('home.html', item_list=data, user_data=user)    
+
+    return render_template('home.html', item_list=data, user_data=user)
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():
@@ -200,7 +200,7 @@ def buy_sell():
     if is_logged_in():
         return render_template('buy_or_sell_page.html')
     else:
-        return redirect('/login')    
+        return redirect('/login')
 
 @app.route('/item/<int:id>')
 def get_item(id: int):
@@ -248,7 +248,7 @@ def send_email(seller_id: str):
             buyer_results = session.execute('select * from user where user_id={}'.format(user_data['user_id']))
             for br in buyer_results:
                 buyer_data = dict(br)
-            
+
         if request.method == 'POST':
             #Send Email
             #https://realpython.com/python-send-email/#option-1-setting-up-a-gmail-account-for-development
@@ -260,7 +260,7 @@ def send_email(seller_id: str):
             receiver_email = seller_data['user_email']
 
             message = MIMEMultipart("alternative")
-            message["Subject"] = f"CMP Message from {buyer_data['user_name']} - {subject}" 
+            message["Subject"] = f"CMP Message from {buyer_data['user_name']} - {subject}"
             message["From"] = sender_email
             message["To"] = receiver_email
 
@@ -299,11 +299,11 @@ def send_email(seller_id: str):
             return render_template('send_email.html', seller_data=seller_data, buyer_data=buyer_data)
     else:
         return redirect('/login')
- 
+
 @app.route('/send_report/<int:id>')
 def send_report(id: int):
     global user_data
-    
+
     if is_logged_in():
         reported_data = None
         with Session.begin() as session:
@@ -317,14 +317,14 @@ def send_report(id: int):
         msg['Subject'] = "User {} has been reported!!".format(reported_data["user_name"])
         # Login with your email and password
         smtp.login('collegemarketplace345@gmail.com', 'toubticyusplqrnd')
-        
+
         # message to be sent
         txt = "{} has reported {}".format(user_data, reported_data)
         msg.attach(MIMEText(txt))
-        
+
         # sending the mail
         smtp.sendmail("collegemarketplace345@gmail.com", "collegemarketplace345@gmail.com", msg.as_string())
-        
+
         # Finally, don't forget to close the connection
         smtp.quit()
         return "report sent!!"
@@ -347,7 +347,7 @@ def submit_review(id: int):
         return render_template('review.html')
     else:
         return redirect('/login')
-        
+
 
 
 @app.route('/sell', methods=['POST', 'GET'])
@@ -392,20 +392,38 @@ def sell_item():
 @app.route('/chat/<int:id>', methods=['POST', 'GET'])
 def message(id: int):
     global user_data
-    if is_logged_in():
-        msg_data = "Nothing"
-        if request.method == 'POST':
-            msg_content = request.form.get('messageContent', 'default content')
-            engine.execute("INSERT INTO message (sender_id, receiver_id, message_content) VALUES (?, ?, ?);", 
-            (user_data["user_id"], id, msg_content))
+    msg_data = {}
+    if request.method == 'POST':
+        msg_content = request.form.get('messageContent', 'default content')
+        engine.execute("INSERT INTO message (sender_id, receiver_id, message_content) VALUES (?, ?, ?);",
+        (user_data["user_id"], id, msg_content))
+    elif request.method == 'GET':
         with Session.begin() as session:
-            msg_results = session.execute(text('select * from message where receiver_id={}'.format(user_data["user_id"])))
-            for mr in msg_results:
-                msg_data = dict(mr)
-            print(msg_data)
-        return render_template('message.html')
-    else:
-        return redirect('/login')
+            msg_results = session.execute(text("SELECT message_content FROM message WHERE receiver_id "
+                                               "= {} ".format(user_data['user_id'])))
+            sender_results = session.execute(text("SELECT user_name FROM user WHERE user_id = "
+                                                  "{}".format(id)))
+            receiver_results = session.execute(text("SELECT user_name FROM user WHERE user_id = "
+                                                    "{}".format(user_data['user_id'])))
+            senders = {}
+            receivers = {}
+            for msg in msg_results:
+                msg_data = dict(msg)
+            for sends in sender_results:
+                senders = dict(sends)
+            for recs in receiver_results:
+                receivers = dict(recs)
+            values = []
+            for key, val in msg_data.items():
+                values.append(val)
+            for key, val in senders.items():
+                the_sender = val
+            for key, val in receivers.items():
+                the_receiver = val
+            print(values)
+            print(senders)
+        return render_template('message.html', receiver=the_receiver, sender=the_sender, messages=values)
+    return render_template('message.html')
 
 
 @app.route('/error')
