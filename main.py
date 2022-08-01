@@ -484,18 +484,25 @@ def view_all_messages():
 
 @app.route('/chat/<int:id>', methods=['POST', 'GET'])
 def message(id: int):
-    seller_data = {}
+    other_user_data = {}
+    list_of_messages = []
     user_data = get_login_user_data()
     if user_data is not None:
+        if user_data["user_id"] == id:
+            return redirect('/chat')
         with sqlal_session_gen.begin() as generated_session:
-            seller_results = generated_session.execute(text('select * from user where user_id={}'.format(id)))
-            for sr in seller_results:
-                seller_data = dict(sr)
+            other_user_results = generated_session.execute(text('select * from user where user_id={}'.format(id)))
+            for oud in other_user_results:
+                other_user_data = dict(oud)
+        with sqlal_session_gen.begin() as generated_session:
+            message_results = generated_session.execute(text('select * from message where sender_id={} or receiver_id={}'.format(user_data['user_id'], user_data['user_id'])))
+            for mr in message_results:
+                list_of_messages.append(dict(mr))
         if request.method == 'POST':
             msg_content = request.form.get('messageContent', 'default content')
             engine.execute("INSERT INTO message (sender_id, receiver_id, message_content) VALUES (?, ?, ?);",
             (user_data["user_id"], id, msg_content))
-        return render_template('dm.html', receiver=seller_data["user_name"] )
+        return render_template('dm.html', sender=user_data, receiver=other_user_data, message_list=list_of_messages)
     else:
         return redirect('/login')
 

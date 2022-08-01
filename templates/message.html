@@ -3,7 +3,7 @@
      <h1>Messages</h1>
       {% for other_user in users_list %}
         <div>
-            <h1>{{ other_user }}</h1>
+            <h1><a href="/chat/{{other_user}}">{{ other_user }}</h1>
         </div>
     {% endfor %}
 {% endblock content %}
