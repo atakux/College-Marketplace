@@ -14,7 +14,7 @@
 <body>
     <div class="navbar">
         <div class="title"><a href="/home">College Marketplace</a></div>
-        <input class="search" type="text" placeholder="Search">
+        <input class="search" id="searchBar" type="search" placeholder="Search">
         {% if user_data == None %}
             <button class="button" onclick="location.href='/login';">Login/Signup</button>
         {% else %}
@@ -27,6 +27,16 @@
     </div>
 
     {% block content %}{% endblock %}
+
+    <script>
+        searchBar = document.getElementById('searchBar');
+        searchBar.addEventListener("keyup", (e) => {
+            if (e.keyCode === 13) {
+                url = "/search/" + searchBar.value;
+                window.location.replace(url)
+            }
+        });
+    </script>
 
 <footer>
     <div>Copyright 2022 College Marketplace</div>
