@@ -97,7 +97,7 @@ footer div {
     color: var(--alabaster);
 }
 
-textarea {
+textarea .area {
     padding: 10px;
     max-width: 100%;
     resize: none;

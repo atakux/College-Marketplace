@@ -17,31 +17,9 @@
     margin-bottom: 40px;
 }
 
-.button.back, .button.create-item {
-    align-items: center;
-    background-color: var(--alabaster);
-    border-radius: 12px;
-    box-shadow: 3px 3px 10px #00000033;
-    display: flex;
-    height: 50px;
-    width: 242px;
-    padding: 5px 30px;
-    cursor: pointer;
-    border: none;
-    font-size: 19px;
-    font-weight: 550;
-    margin-top: 55px;
-    transition: 0.2s;
-}
-
-.button:hover {
-    background-color: var(--dodger-blue);
-    color: var(--alabaster);
-}
-
 .button.create-item {
-    background-color: var(--dodger-blue);
-    color: var(--alabaster);
+    background-color: var(--dodger-blue) !important;
+    color: var(--alabaster) !important;
 }
 
 .container {
