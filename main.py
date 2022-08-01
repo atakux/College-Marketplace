@@ -210,8 +210,8 @@ def sign_up():
             msg = Message('Confirm Email.', sender='collegemarketplace345@gmail.com', recipients=[email])
             link = url_for('confirm_email', token=token, _external=True)
             msg.body = 'Welcome to College Marketplace !! \n\n\n Click this link to verify your account: {} ' \
-                       '\n\n Also, your token is {}. \n\n\nThank you! \nHappy shopping,\nCollege Marketplace ' \
-                       'Team'.format(link, token)
+                       '\n\n\nThank you! \nHappy shopping,\nCollege Marketplace ' \
+                       'Team'.format(link)
 
             mail.send(msg)
 
