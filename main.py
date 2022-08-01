@@ -180,15 +180,43 @@ def sign_up():
         if request.method == 'POST':
             user_name = request.form.get('userName', 'default value name')
             email = request.form.get('email', 'default value email')
+            address = request.form.get('address', 'default address')
 
+            #Check for duplicate email/username
+            dup_email = False
+            dup_user_name = False
+            with Session.begin() as sess:
+                user_results = sess.execute(text('SELECT * FROM user WHERE user_email="{}"'.format(str(email))))
+                for ur in user_results:
+                    dup_email = True
+                user_results = sess.execute(text('SELECT * FROM user WHERE user_name="{}"'.format(str(user_name))))
+                for ur in user_results:
+                    dup_user_name = True
+
+            #Check for valid zip code
+            valid_zip = (requests.get(f'https://maps.googleapis.com/maps/api/geocode/json?address={address}&key={API_KEY}')).json()
+            print()
+                
+            #Check edu
             if '.edu' not in email:
                 print("invalid email")
                 flash("You must input a school email.")
                 return render_template('signup.html')
+            elif dup_email == True:
+                print("Duplicate Email")
+                flash(f"There is already an account with email {email}. Please login or use different email.")
+                return render_template('signup.html')
+            elif dup_user_name == True:
+                print("Duplicate Email")
+                flash(f"Username {user_name} is taken, please choose different username.")
+                return render_template('signup.html')
+            elif valid_zip['status'] == 'ZERO_RESULTS':
+                print("Invalid Zip")
+                flash(f"Zip code {address} is not valid, please use valid zip code.")
+                return render_template('signup.html') 
             else:
+                #Hash Password
                 password = request.form.get('password', 'default value password')
-                address = request.form.get('address', 'default address')
-
                 salt = bcrypt.gensalt()
                 hashed_pass = bcrypt.hashpw(bytes(password, encoding='utf8'), salt)
 
@@ -459,13 +487,6 @@ def get_user_data_by_id(id):
         user_results = sess.execute(text('select * from user where user_id={}'.format(id)))
         for ur in user_results:
             return ur
-
-
-def get_seller_name_by_id(id):
-    with Session.begin() as session:
-            seller_results = session.execute(text('select * from user where user_id={}'.format(id)))
-            for sr in seller_results:
-                return sr['user_name']
 
 
 if __name__ == '__main__':
