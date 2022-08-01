@@ -108,7 +108,7 @@ def home():
     results = None
     data = []
     with Session.begin() as sess:
-        results = sess.execute(text('SELECT * FROM item ORDER BY item_id DESC LIMIT 9'))
+        results = sess.execute(text('SELECT * FROM item WHERE active=1 ORDER BY item_id DESC LIMIT 9'))
         for r in results:
             r_dict = dict(r)
 
@@ -143,7 +143,7 @@ def search(query:str):
     return render_template('home.html', item_list=data, user_data=user_data, search_query=query)    
 
 @app.route('/login', methods=['POST', 'GET'])
-def login():
+def login(next_path=None):
     user_data = get_login_user_data()
 
     if user_data is None:
@@ -159,7 +159,12 @@ def login():
                 if bcrypt.checkpw(bytes(password, encoding='utf8'), user_data['user_password']):
                     session['user_id'] = user_data['user_id']
                     print("successful login")
-                    return redirect(url_for('home'))
+                    if 'next' in session:
+                        url = session['next']
+                        session.pop('next')
+                        return redirect(url)
+                    else:
+                        return redirect(url_for('home'))
                 else:
                     redirect(url_for('login'))
                     flash("The username and/or password is incorrect, please try again.", category="is-danger")
@@ -314,6 +319,7 @@ def get_item(id: int):
         return render_template('itempage.html', item=item_data, seller=seller_data, user_zip=user_place_id,
                                seller_zip=seller_place_id, distance=distance_miles, API_KEY=API_KEY)
     else:
+        #session['next'] = url_for('get_item', id=id)
         return redirect(url_for('login'))
 
 
@@ -449,6 +455,7 @@ def submit_review(id: int):
             flash('You must verify your email to do this action')
             return redirect(url_for('home'))
     else:
+        session['next'] = url_for('submit_review', id=id)
         return redirect(url_for('login'))
 
 
@@ -500,8 +507,40 @@ def sell_item():
             flash('You must verify your email to do this action')
             return redirect(url_for('home'))
     else:
+        session['next'] = url_for('sell_item')
         return redirect(url_for('login'))
 
+@app.route('/manage', methods=['POST', 'GET'])
+def manage():
+    user_data = get_login_user_data()
+    data = []
+    if user_data is not None:
+        #Get Data
+        with Session.begin() as sess:
+            results = sess.execute(text('SELECT * FROM item WHERE seller_id={} ORDER BY item_id DESC'.format(user_data['user_id'])))
+            for r in results:
+                r_dict = dict(r)
+                data.append(r_dict)
+
+        #Post
+        if request.method == 'POST':
+            item_name = request.form.get('name')
+            price = request.form.get('price')
+            description = request.form.get('itemDesc')
+            status = request.form.get('status')
+            item_id = request.form.get('itemId')
+            
+            #Update
+            engine.execute(f"UPDATE item SET item_name='{item_name}', item_price={price}, item_description='{description}', active={status} WHERE item_id={item_id}")
+            return redirect(url_for('manage'))
+
+
+
+        
+        return render_template('manage_item.html', item_list=data)
+    else:
+        session['next'] = url_for('manage')
+        return redirect(url_for('login'))
 
 @app.route('/chat/<int:id>', methods=['POST', 'GET'])
 def message(id: int):
@@ -543,6 +582,7 @@ def message(id: int):
             flash('You must verify your email to do this action')
             return redirect(url_for('home'))
     return render_template('message.html')
+    
 
 
 @app.route('/error')
