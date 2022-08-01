@@ -202,6 +202,7 @@ def buy_sell():
     else:
         return redirect('/login')
 
+
 @app.route('/item/<int:id>')
 def get_item(id: int):
     global user_data
@@ -220,15 +221,16 @@ def get_item(id: int):
 
         #Get place ids for locations
         user_place_id = (requests.get(f"https://maps.googleapis.com/maps/api/geocode/json?address={user_data['user_zip']}&key={API_KEY}")).json()
-        user_place_id = user_place_id['results'][0]["place_id"]
+        user_place_id = user_place_id['results']
         seller_place_id = (requests.get(f"https://maps.googleapis.com/maps/api/geocode/json?address={seller_data['user_zip']}&key={API_KEY}")).json()
-        seller_place_id = seller_place_id['results'][0]["place_id"]
+        seller_place_id = seller_place_id['results']
         distance_matrix = (requests.get(f"https://maps.googleapis.com/maps/api/distancematrix/json?destinations={user_data['user_zip']}&origins={seller_data['user_zip']}&units=imperial&key={API_KEY}")).json()
         distance_miles = (distance_matrix['rows'][0]['elements'][0]['distance']['value'])//1609
 
         return render_template('itempage.html', item=item_data, seller=seller_data, user_zip=user_place_id, seller_zip=seller_place_id, distance=distance_miles, API_KEY=API_KEY)
     else:
         return redirect('/login')
+
 
 @app.route('/send_email/<seller_id>', methods=['POST', 'GET'])
 def send_email(seller_id: str):
@@ -300,6 +302,7 @@ def send_email(seller_id: str):
     else:
         return redirect('/login')
 
+
 @app.route('/send_report/<int:id>')
 def send_report(id: int):
     global user_data
@@ -330,6 +333,7 @@ def send_report(id: int):
         return "report sent!!"
     else:
         return redirect('/login')
+
 
 @app.route('/review/<int:id>', methods=["GET", "POST"])
 def submit_review(id: int):
@@ -441,6 +445,7 @@ def is_logged_in():
             return True
     except NameError:
         return False
+
 
 def get_seller_name_by_id(id):
     with Session.begin() as session:
