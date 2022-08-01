@@ -2,9 +2,12 @@ import requests
 import googlemaps
 import os
 import bcrypt
+import smtplib
+import ssl
 import sqlalchemy as db
 
 from flask import Flask, redirect, jsonify, request, render_template, url_for, flash, session
+from flask_mail import Mail, Message
 from sqlalchemy import text
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker
@@ -13,8 +16,8 @@ from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
-import smtplib, ssl
 
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired
 
 
 Base = declarative_base()
@@ -76,9 +79,17 @@ API_KEY = os.environ['API_KEY']
 UPLOAD_FOLDER = 'static/images'
 app.config['SECRET_KEY'] = 'fec93d1b1cb7926beb25960608b25818'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAIL_SERVER']='smtp.gmail.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USERNAME'] = 'collegemarketplace345@gmail.com'
+app.config['MAIL_PASSWORD'] = 'zglgrqyjjqlhaatw'
+app.config['MAIL_USE_TLS'] = False
+app.config['MAIL_USE_SSL'] = True
 map_client = googlemaps.Client(API_KEY)
 Session = sessionmaker(engine)
 
+mail = Mail(app)
+s = URLSafeTimedSerializer('secretcode')
 
 @app.route('/', methods=['POST', 'GET'])
 @app.route('/home', methods=['POST', 'GET'])
@@ -190,6 +201,14 @@ def sign_up():
             #Check for duplicate email/username
             dup_email = False
             dup_user_name = False
+
+            token = s.dumps(email, salt='email-confirm')
+            msg = Message('Confirm Email.', sender='collegemarketplace345@gmail.com', recipients=[email])
+            link = url_for('confirm_email', token=token, _external=True)
+            msg.body = 'Your link is {}. Your token is {}.'.format(link, token)
+
+            mail.send(msg)
+
             with Session.begin() as sess:
                 user_results = sess.execute(text('SELECT * FROM user WHERE user_email="{}"'.format(str(email))))
                 for ur in user_results:
@@ -232,6 +251,15 @@ def sign_up():
         return render_template('signup.html')
     else:
         return redirect('buy_sell')
+
+
+@app.route('/confirm_email/<token>')
+def confirm_email(token):
+    try:
+        email = s.loads(token, salt='email-confirm', max_age=3600)
+    except SignatureExpired:
+        return '<h1>The token is expired!</h1>'
+    return '<h1>The token works!</h1>'
 
 
 @app.route('/buy_sell', methods=['GET', 'POST'])
