@@ -5,13 +5,48 @@
         <div class="item-list">
             {% for actual_item in item_list %}
             <div class="item">
-                <img src="{{ url_for('static', filename='images/' + actual_item['item_id']|string + '.png') }}" class="center">
-                <div class="item-name"><a href="/item/{{ actual_item['item_id'] }}">{{ actual_item['item_name'] }}</a></div>
-                <div class="price">
-                    <p class="tag">Price: </p>${{ actual_item['item_price'] }}
-                </div>
-                <div><button class="delete">Delete</button></div>
+                <a href="/item/{{ actual_item['item_id'] }}"><img src="{{ url_for('static', filename='images/' + actual_item['item_id']|string + '.png') }}" class="center" style="max-width: 300px; max-height: 200px;"></a>
+                <form method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="itemId" value="{{ actual_item['item_id'] }}"/>
+                    <input type="name" id="name" name="name" autocomplete="off" placeholder="Enter name" value="{{ actual_item['item_name'] }}">
+                    <input type="number" id="price" name="price" autocomplete="off" placeholder="Enter price" value="{{ actual_item['item_price'] }}">
+                    <textarea name="itemDesc" id="item description" placeholder="Item description">{{ actual_item['item_description'] }}</textarea>
+                    <select name="status" id="status">
+                        {% if actual_item['active'] == 1 %}
+                            <option value=1 selected>Active</option>
+                            <option value=0>Sold</option>
+                        {% else %}
+                            <option value=1>Active</option>
+                            <option value=0 selected>Sold</option>
+                        {% endif %}
+                    </select>
+                    <div><button class="delete" type="submit">Update Listing</button></div>
+                </form>
             </div>
             {% endfor %}
         </div>
+
+        {% if products|length < 1 %}
+            <br>
+            <div style="text-align:center;">
+                <h1>No Listed Items</h1>
+                <button class="button" onclick="location.href='/sell';">List Item</button>
+            </div>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+        {% endif %}
 {% endblock content %}

@@ -15,15 +15,16 @@
 
 .item {
   padding: 28px 30px;
-  opacity: 0;
+  opacity: 1;
   margin-top: 100px;
   border: 1px;
   border-style: solid;
   border-radius: 12px;
   border-color: var(--silver);
   flex-direction: column;
-  min-height: 450px;
-  width: 370px;
+  min-height: 550px;
+  max-height: 550px;
+  width: 300px;
 }
 
 .item-name {
@@ -52,6 +53,52 @@
   padding-top: 3px;
 }
 
-.delete {
-    color: #FF2F88;
+
+textarea {
+    display: inline-block;
+    margin: 5px 0px 0px 0px;
+    font-size: 14px;
+    width: 90%;
+    height: 100px;
+    border: 1.5px solid var(--silver);
+    border-radius: 10px;
+    padding: 10px 15px;
+    resize: none;
+}
+
+button {
+    text-decoration: none;
+    background-color: var(--dodger-blue);
+    color: var(--alabaster);
+    border: none;
+    border-radius: 12px;
+    outline: none;
+    cursor: pointer;
+    font-size: 17px;
+    font-weight: 500;
+    padding: 5px 20px;
+}
+
+input {
+    display: inline-block;
+    margin-top: 5px;
+    font-size: 14px;
+    width: 90%;
+    border: 1.5px solid var(--silver);
+    border-radius: 10px;
+    padding: 10px 15px;
+}
+
+select {
+  display: inline-block;
+  margin-bottom: 10px;
+  font-size: 14px;
+  width: 100%;
+  border: 1.5px solid var(--silver);
+  border-radius: 10px;
+  padding: 10px 15px;
+}
+
+input:focus {
+    outline: 1px solid var(--dodger-blue);
 }
