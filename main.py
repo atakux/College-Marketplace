@@ -447,7 +447,6 @@ def display_error():
 
 
 def get_login_user_data():
-
     """Checks to see if user is logged in. If so, returns true. If not, returns false"""
     try:
         user_data = get_user_data_by_id(session['user_id'])

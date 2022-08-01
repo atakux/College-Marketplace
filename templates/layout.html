@@ -15,7 +15,7 @@
     <div class="navbar">
         <div class="title"><a href="/home">College Marketplace</a></div>
         <input class="search" type="text" placeholder="Search">
-        {% if user_data == false %}
+        {% if user_data == None %}
             <button class="button" onclick="location.href='/login';">Login/Signup</button>
         {% else %}
             <div>
