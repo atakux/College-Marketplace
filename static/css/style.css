@@ -96,3 +96,11 @@ footer div {
     background-color: var(--dodger-blue);
     color: var(--alabaster);
 }
+
+textarea {
+    padding: 10px;
+    max-width: 100%;
+    resize: none;
+    margin: 0 10px -150px;
+    text-align: justify;
+}

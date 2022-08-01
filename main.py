@@ -79,6 +79,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 map_client = googlemaps.Client(API_KEY)
 Session = sessionmaker(engine)
 
+
 @app.route('/', methods=['POST', 'GET'])
 @app.route('/home', methods=['POST', 'GET'])
 def home():
@@ -111,6 +112,7 @@ def home():
             r_dict['distance'] = 10
     
     return render_template('home.html', item_list=data, user_data=user_data)    
+
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():
@@ -208,7 +210,8 @@ def buy_sell():
     if user_data != None:
         return render_template('buy_or_sell_page.html')
     else:
-        return redirect('/login')    
+        return redirect('/login')
+
 
 @app.route('/item/<int:id>')
 def get_item(id: int):
@@ -225,15 +228,16 @@ def get_item(id: int):
 
         #Get place ids for locations
         user_place_id = (requests.get(f"https://maps.googleapis.com/maps/api/geocode/json?address={user_data['user_zip']}&key={API_KEY}")).json()
-        user_place_id = user_place_id['results'][0]["place_id"]
+        user_place_id = user_place_id['results']
         seller_place_id = (requests.get(f"https://maps.googleapis.com/maps/api/geocode/json?address={seller_data['user_zip']}&key={API_KEY}")).json()
-        seller_place_id = seller_place_id['results'][0]["place_id"]
+        seller_place_id = seller_place_id['results']
         distance_matrix = (requests.get(f"https://maps.googleapis.com/maps/api/distancematrix/json?destinations={user_data['user_zip']}&origins={seller_data['user_zip']}&units=imperial&key={API_KEY}")).json()
         distance_miles = (distance_matrix['rows'][0]['elements'][0]['distance']['value'])//1609
 
         return render_template('itempage.html', item=item_data, seller=seller_data, user_zip=user_place_id, seller_zip=seller_place_id, distance=distance_miles, API_KEY=API_KEY)
     else:
         return redirect('/login')
+
 
 @app.route('/user/<seller_id>', methods=['POST', 'GET'])
 def user(seller_id: str):
@@ -249,7 +253,6 @@ def user(seller_id: str):
         return render_template('error.html')
 
     
-
 
 @app.route('/send_email/<seller_id>', methods=['POST', 'GET'])
 def send_email(seller_id: str):
@@ -313,7 +316,8 @@ def send_email(seller_id: str):
             return render_template('send_email.html', seller_data=seller_data, buyer_data=buyer_data)
     else:
         return redirect('/login')
- 
+
+
 @app.route('/send_report/<int:id>')
 def send_report(id: int):
     user_data = get_login_user_data()
@@ -340,6 +344,7 @@ def send_report(id: int):
     else:
         return redirect('/login')
 
+
 @app.route('/review/<int:id>', methods=["GET", "POST"])
 def submit_review(id: int):
     user_data = get_login_user_data()
@@ -356,7 +361,7 @@ def submit_review(id: int):
         return render_template('review.html')
     else:
         return redirect('/login')
-        
+
 
 
 @app.route('/sell', methods=['POST', 'GET'])
@@ -400,27 +405,49 @@ def sell_item():
 
 @app.route('/chat/<int:id>', methods=['POST', 'GET'])
 def message(id: int):
+
     user_data = get_login_user_data()
     if user_data != None:
-        msg_data = "Nothing"
+        msg_data = {}
         if request.method == 'POST':
             msg_content = request.form.get('messageContent', 'default content')
             engine.execute("INSERT INTO message (sender_id, receiver_id, message_content) VALUES (?, ?, ?);", 
             (user_data["user_id"], id, msg_content))
+
         with Session.begin() as session:
-            msg_results = session.execute(text('select * from message where receiver_id={}'.format(user_data["user_id"])))
-            for mr in msg_results:
-                msg_data = dict(mr)
-            print(msg_data)
-        return render_template('message.html')
-    else:
-        return redirect('/login')
+            msg_results = session.execute(text("SELECT message_content FROM message WHERE receiver_id "
+                                               "= {} ".format(user_data['user_id'])))
+            sender_results = session.execute(text("SELECT user_name FROM user WHERE user_id = "
+                                                  "{}".format(id)))
+            receiver_results = session.execute(text("SELECT user_name FROM user WHERE user_id = "
+                                                    "{}".format(user_data['user_id'])))
+            senders = {}
+            receivers = {}
+            for msg in msg_results:
+                msg_data = dict(msg)
+            for sends in sender_results:
+                senders = dict(sends)
+            for recs in receiver_results:
+                receivers = dict(recs)
+            values = []
+            for key, val in msg_data.items():
+                values.append(val)
+            for key, val in senders.items():
+                the_sender = val
+            for key, val in receivers.items():
+                the_receiver = val
+            print(values)
+            print(senders)
+        return render_template('message.html', receiver=the_receiver, sender=the_sender, messages=values)
+    return render_template('message.html')
 
 @app.route('/error')
 def display_error():
     return render_template('error.html')
 
+
 def get_login_user_data():
+
     """Checks to see if user is logged in. If so, returns true. If not, returns false"""
     try:
         user_data = get_user_data_by_id(session['user_id'])
@@ -434,6 +461,12 @@ def get_user_data_by_id(id):
         for ur in user_results:
             return ur
 
+
+def get_seller_name_by_id(id):
+    with Session.begin() as session:
+            seller_results = session.execute(text('select * from user where user_id={}'.format(id)))
+            for sr in seller_results:
+                return sr['user_name']
 
 
 if __name__ == '__main__':
