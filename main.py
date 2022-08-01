@@ -77,12 +77,14 @@ if not inspector.has_table("message"):
 app = Flask(__name__)
 API_KEY = os.environ['API_KEY']
 UPLOAD_FOLDER = 'static/images'
+EMAIL_ADDRESS = 'collegemarketplace69@gmail.com'
+EMAIL_APP_PASSWORD = os.environ['EMAIL_APP_PASSWORD']
 app.config['SECRET_KEY'] = 'fec93d1b1cb7926beb25960608b25818'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
-app.config['MAIL_USERNAME'] = 'collegemarketplace345@gmail.com'
-app.config['MAIL_PASSWORD'] = 'zglgrqyjjqlhaatw'
+app.config['MAIL_USERNAME'] = EMAIL_ADDRESS
+app.config['MAIL_PASSWORD'] = EMAIL_APP_PASSWORD
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
 map_client = googlemaps.Client(API_KEY)
@@ -218,16 +220,6 @@ def sign_up():
             # Check for duplicate email/username
             dup_email = False
             dup_user_name = False
-
-            token = s.dumps(email, salt='email-confirm')
-            msg = Message('Confirm Email.', sender='collegemarketplace345@gmail.com', recipients=[email])
-            link = url_for('confirm_email', token=token, _external=True)
-            msg.body = 'Welcome to College Marketplace !! \n\n\n Click this link to verify your account: {} ' \
-                       '\n\n\nThank you! \nHappy shopping,\nCollege Marketplace ' \
-                       'Team'.format(link)
-
-            mail.send(msg)
-
             with Session.begin() as sess:
                 user_results = sess.execute(text('SELECT * FROM user WHERE user_email="{}"'.format(str(email))))
                 for ur in user_results:
@@ -237,28 +229,36 @@ def sign_up():
                     dup_user_name = True
 
             # Check for valid zip code
-            valid_zip = (requests.get(
-                f'https://maps.googleapis.com/maps/api/geocode/json?address={address}&key={API_KEY}')).json()
-            print()
+            valid_zip = (requests.get(f'https://maps.googleapis.com/maps/api/geocode/json?address={address}&key={API_KEY}')).json()
 
             # Check edu
             if '.edu' not in email:
                 print("invalid email")
                 flash("You must input a school email.")
                 return render_template('signup.html')
-            elif dup_email == True:
+            elif dup_email == True: #Check Email
                 print("Duplicate Email")
                 flash(f"There is already an account with email {email}. Please login or use different email.")
                 return render_template('signup.html')
-            elif dup_user_name == True:
+            elif dup_user_name == True: #Check Username
                 print("Duplicate Username")
                 flash(f"Username {user_name} is taken, please choose different username.")
                 return render_template('signup.html')
-            elif valid_zip['status'] == 'ZERO_RESULTS':
+            elif valid_zip['status'] == 'ZERO_RESULTS': #Check Zip Code
                 print("Invalid Zip")
                 flash(f"Zip code {address} is not valid, please use valid zip code.")
                 return render_template('signup.html')
             else:
+                #Send Verification Email
+                token = s.dumps(email, salt='email-confirm')
+                msg = Message('Confirm Email.', sender=EMAIL_ADDRESS, recipients=[email])
+                link = url_for('confirm_email', token=token, _external=True)
+                msg.body = 'Welcome to College Marketplace !! \n\n\n Click this link to verify your account: {} ' \
+                        '\n\n\nThank you! \nHappy shopping,\nCollege Marketplace ' \
+                        'Team'.format(link)
+
+                mail.send(msg)
+
                 # Hash Password
                 password = request.form.get('password', 'default value password')
                 salt = bcrypt.gensalt()
@@ -286,39 +286,6 @@ def confirm_email(token):
         display_error()
     finally:
         return redirect(url_for('login'))
-
-
-@app.route('/buy_sell', methods=['GET', 'POST'])
-def buy_sell():
-    user_data = get_login_user_data()
-    '''
-    Display buy or sell page
-    '''
-    if user_data is not None:
-        uid = user_data['user_id']
-
-        with Session.begin() as session:
-            email_results = session.execute(text("SELECT user_email FROM user WHERE user_id = {}".format(uid)))
-            emails = {}
-            values = []
-            for e in email_results:
-                emails = dict(e)
-
-            for key, val in emails.items():
-                values.append(val)
-
-            print(values)
-
-            user_data = get_login_user_data()
-            if user_data['user_status'] == 1:
-                print("LESGO")
-            else:
-                print("you stinky")
-
-            return render_template('buy_or_sell_page.html')
-    else:
-        return redirect(url_for('login'))
-
 
 @app.route('/item/<int:id>')
 def get_item(id: int):
@@ -383,7 +350,7 @@ def send_email(seller_id: str):
                 subject = request.form.get('subject', '')
                 message_text = request.form.get('message', '')
 
-                sender_email = "collegemarketplace345@gmail.com"
+                sender_email = EMAIL_ADDRESS
                 sender_password = "toubticyusplqrnd"
                 receiver_email = seller_data['user_email']
 
@@ -444,14 +411,14 @@ def send_report(id: int):
             msg = MIMEMultipart()
             msg['Subject'] = "User {} has been reported!!".format(reported_data["user_name"])
             # Login with your email and password
-            smtp.login('collegemarketplace345@gmail.com', 'toubticyusplqrnd')
+            smtp.login(EMAIL_ADDRESS, EMAIL_APP_PASSWORD)
 
             # message to be sent
             txt = "{} has reported {}".format(user_data, reported_data)
             msg.attach(MIMEText(txt))
 
             # sending the mail
-            smtp.sendmail("collegemarketplace345@gmail.com", "collegemarketplace345@gmail.com", msg.as_string())
+            smtp.sendmail(EMAIL_ADDRESS, EMAIL_ADDRESS, msg.as_string())
 
             # Finally, don't forget to close the connection
             smtp.quit()
