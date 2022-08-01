@@ -256,9 +256,9 @@ def get_item(id: int):
 
         #Get place ids for locations
         user_place_id = (requests.get(f"https://maps.googleapis.com/maps/api/geocode/json?address={user_data['user_zip']}&key={API_KEY}")).json()
-        user_place_id = user_place_id['results']
+        user_place_id = user_place_id['results'][0]["place_id"]
         seller_place_id = (requests.get(f"https://maps.googleapis.com/maps/api/geocode/json?address={seller_data['user_zip']}&key={API_KEY}")).json()
-        seller_place_id = seller_place_id['results']
+        seller_place_id = seller_place_id['results'][0]["place_id"]
         distance_matrix = (requests.get(f"https://maps.googleapis.com/maps/api/distancematrix/json?destinations={user_data['user_zip']}&origins={seller_data['user_zip']}&units=imperial&key={API_KEY}")).json()
         distance_miles = (distance_matrix['rows'][0]['elements'][0]['distance']['value'])//1609
 
