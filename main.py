@@ -4,7 +4,7 @@ import os
 import bcrypt
 import sqlalchemy as db
 
-from flask import Flask, redirect, jsonify, request, render_template, url_for, flash
+from flask import Flask, redirect, jsonify, request, render_template, url_for, flash, session
 from sqlalchemy import text
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker
@@ -82,44 +82,52 @@ Session = sessionmaker(engine)
 @app.route('/', methods=['POST', 'GET'])
 @app.route('/home', methods=['POST', 'GET'])
 def home():
-    global user_data
     '''
     use render template to load the data into whatever the template is
     This is the list of items page where each item is on display
     '''
     #Get User Data if Logged in
-    if is_logged_in():
-        user = user_data
-    else:
-        user = False
+    user_data = get_login_user_data()
 
     #Get item data
     results = None
     data = []
-    with Session.begin() as session:
-        results = session.execute(text('select * from item'))
+    with Session.begin() as sess:
+        results = sess.execute(text('select * from item'))
         for r in results:
             r_dict = dict(r)
-            r_dict['seller_name'] = get_seller_name_by_id(r_dict['seller_id'])
+
+            #Get Seller Name
+            seller_data = get_user_data_by_id(r_dict['seller_id'])
+            r_dict['seller_name'] = seller_data['user_name']
             data.append(r_dict)
+
+            #Get Distance
+            """
+            distance_matrix = (requests.get(f"https://maps.googleapis.com/maps/api/distancematrix/json?destinations={user_data['user_zip']}&origins={seller_data['user_zip']}&units=imperial&key={API_KEY}")).json()
+            distance_miles = (distance_matrix['rows'][0]['elements'][0]['distance']['value'])//1609
+            r_dict['distance'] = distance_miles
+            """
+            r_dict['distance'] = 10
     
-    return render_template('home.html', item_list=data, user_data=user)    
+    return render_template('home.html', item_list=data, user_data=user_data)    
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():
-    global user_data
+    user_data = get_login_user_data()
 
-    if not is_logged_in():
+    if user_data == None:
         if request.method == 'POST':
             email = request.form.get('email', 'default value email')
             password = request.form.get('password', 'default value password')
             try:
                 user_results = None
-                with Session.begin() as session:
-                    user_results = session.execute(text("select * from user where user_email='{}'".format(str(email))))
+                with Session.begin() as sess:
+                    user_results = sess.execute(text("select * from user where user_email='{}'".format(str(email))))
                     for r in user_results:
                         user_data = dict(r)
                 if bcrypt.checkpw(bytes(password, encoding='utf8'), user_data['user_password']):
+                    session['user_id'] = user_data['user_id']
                     print("successful login")
                     return redirect('/')
             except Exception as ex:
@@ -130,15 +138,14 @@ def login():
 
 @app.route('/logout')
 def logout():
-    global user_data
-    if is_logged_in():
-        user_data = None
+    if get_login_user_data() != None:
+        session.pop('user_id')
     return redirect('/login')
 
 
 # for testing
 @app.route('/user')
-def get_user_data():
+def get_user():
     results = None
     data = []
     with Session.begin() as session:
@@ -166,7 +173,8 @@ def sign_up():
     Will be using a template. Likely will not need any input
     will need an output from the template in order to add the new user to the database
     """
-    if not is_logged_in():
+    user_data = get_login_user_data()
+    if user_data == None:
         if request.method == 'POST':
             user_name = request.form.get('userName', 'default value name')
             email = request.form.get('email', 'default value email')
@@ -193,30 +201,27 @@ def sign_up():
 
 @app.route('/buy_sell', methods=['GET', 'POST'])
 def buy_sell():
-    global user_data
+    user_data = get_login_user_data()
     '''
     Display buy or sell page
     '''
-    if is_logged_in():
+    if user_data != None:
         return render_template('buy_or_sell_page.html')
     else:
         return redirect('/login')    
 
 @app.route('/item/<int:id>')
 def get_item(id: int):
-    global user_data
+    user_data = get_login_user_data()
     item_data = {}
     seller_data = {}
 
-    if is_logged_in():
+    if user_data != None:
         with Session.begin() as session:
             item_results = session.execute(text('select * from item where item_id={}'.format(id)))
             for ir in item_results:
                 item_data = dict(ir)
-        with Session.begin() as session:
-            seller_results = session.execute(text('select * from user where user_id={}'.format(item_data['seller_id'])))
-            for sr in seller_results:
-                seller_data = dict(sr)
+        seller_data = get_user_data_by_id(item_data['seller_id'])
 
         #Get place ids for locations
         user_place_id = (requests.get(f"https://maps.googleapis.com/maps/api/geocode/json?address={user_data['user_zip']}&key={API_KEY}")).json()
@@ -230,24 +235,33 @@ def get_item(id: int):
     else:
         return redirect('/login')
 
+@app.route('/user/<seller_id>', methods=['POST', 'GET'])
+def user(seller_id: str):
+    user_data = get_login_user_data()
+    seller_data = None
+
+    #Get Seller Data
+    seller_data = get_user_data_by_id(seller_id)
+
+    if seller_data != None:
+        return render_template('user.html', user_data=user_data, seller=seller_data)
+    else:
+        return render_template('error.html')
+
+    
+
+
 @app.route('/send_email/<seller_id>', methods=['POST', 'GET'])
 def send_email(seller_id: str):
     """Allows you send email to the user of associated id"""
-    global user_data
+    user_data = get_login_user_data()
     seller_data = {}
     buyer_data = {}
 
-    if is_logged_in():
-        print(seller_id)
-
+    if user_data != None:
         #Get Data
-        with Session.begin() as session:
-            seller_results = session.execute('select * from user where user_id={}'.format(seller_id))
-            for sr in seller_results:
-                seller_data = dict(sr)
-            buyer_results = session.execute('select * from user where user_id={}'.format(user_data['user_id']))
-            for br in buyer_results:
-                buyer_data = dict(br)
+        seller_data = get_user_data_by_id(seller_id)
+        buyer_data = get_user_data_by_id(user_data['user_id'])
             
         if request.method == 'POST':
             #Send Email
@@ -302,14 +316,9 @@ def send_email(seller_id: str):
  
 @app.route('/send_report/<int:id>')
 def send_report(id: int):
-    global user_data
-    
-    if is_logged_in():
-        reported_data = None
-        with Session.begin() as session:
-            reported_res = session.execute(text('select * from user where user_id={}'.format(id)))
-            for repor in reported_res:
-                reported_data = dict(repor)
+    user_data = get_login_user_data()
+    if user_data != None:
+        reported_data = get_user_data_by_id(id)
         smtp = smtplib.SMTP('smtp.gmail.com', 587)
         smtp.ehlo()
         smtp.starttls()
@@ -333,8 +342,8 @@ def send_report(id: int):
 
 @app.route('/review/<int:id>', methods=["GET", "POST"])
 def submit_review(id: int):
-    global user_data
-    if is_logged_in():
+    user_data = get_login_user_data()
+    if user_data != None:
         connection = None
         id_num = 0
         if user_data is None:
@@ -352,7 +361,7 @@ def submit_review(id: int):
 
 @app.route('/sell', methods=['POST', 'GET'])
 def sell_item():
-    global user_data
+    user_data = get_login_user_data()
     connection = None
     '''
     Will be using a template. Likely will not need any input
@@ -361,7 +370,7 @@ def sell_item():
     if request.method == 'POST':
         user = request.form
         return 'adding item please wait a moment'''
-    if is_logged_in():
+    if user_data != None:
         if request.method == 'POST':
             item_name = request.form.get('name', 'default item name')
             price = request.form.get('price', 'default price')
@@ -391,8 +400,8 @@ def sell_item():
 
 @app.route('/chat/<int:id>', methods=['POST', 'GET'])
 def message(id: int):
-    global user_data
-    if is_logged_in():
+    user_data = get_login_user_data()
+    if user_data != None:
         msg_data = "Nothing"
         if request.method == 'POST':
             msg_content = request.form.get('messageContent', 'default content')
@@ -407,27 +416,24 @@ def message(id: int):
     else:
         return redirect('/login')
 
-
 @app.route('/error')
 def display_error():
     return render_template('error.html')
 
-def is_logged_in():
-    global user_data
+def get_login_user_data():
     """Checks to see if user is logged in. If so, returns true. If not, returns false"""
     try:
-        if user_data is None:
-            return False
-        else:
-            return True
-    except NameError:
-        return False
+        user_data = get_user_data_by_id(session['user_id'])
+        return user_data
+    except:
+        return None
 
-def get_seller_name_by_id(id):
-    with Session.begin() as session:
-            seller_results = session.execute(text('select * from user where user_id={}'.format(id)))
-            for sr in seller_results:
-                return sr['user_name']
+def get_user_data_by_id(id):
+    with Session.begin() as sess:
+        user_results = sess.execute(text('select * from user where user_id={}'.format(id)))
+        for ur in user_results:
+            return ur
+
 
 
 if __name__ == '__main__':

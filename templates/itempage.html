@@ -20,7 +20,7 @@
         <div class="details">
             <div class="item-name">{{ item['item_name'] }} </div>
             <div class="price"><p class="tag">Price:</p> ${{ item['item_price'] }}</div>
-            <button style="font-size: 22px;" class="button" type="submit" id="btn"><a href="/send_email/{{ seller['user_id'] }}">Message Seller</a></button>
+            <button style="font-size: 22px;" class="button" type="submit" id="btn"><a href="/chat/{{ seller['user_id'] }}">Message Seller</a></button>
         </div>
     </div>
 
@@ -45,11 +45,6 @@
             {% endif %}
         </div>
         
-    </div>
-    <div style="margin-left: 40vh; margin-top: 50px;">
-        <button type="submit" id="review-btn"><a href="/review/{{ seller['user_id'] }}">Review</a></button>
-        <button type="submit" id="msg-btn"><a href="/chat/{{ seller['user_id'] }}">Message</a></button>
-        <button type="submit" id="report-btn"><a href="/send_report/{{ seller['user_id'] }}">Report Seller</a></button>
     </div>
 </body>
 
