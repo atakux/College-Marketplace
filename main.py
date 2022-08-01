@@ -131,21 +131,23 @@ def login():
                 if bcrypt.checkpw(bytes(password, encoding='utf8'), user_data['user_password']):
                     session['user_id'] = user_data['user_id']
                     print("successful login")
-                    return redirect('/')
+                    return redirect(url_for('home'))
                 else:
+                    redirect(url_for('login'))
                     flash("The username and/or password is incorrect, please try again.")
             except Exception as ex:
+                redirect(url_for('login'))
                 flash("The username and/or password is incorrect, please try again.")
                 print("error" + str(ex))
         return render_template('signin.html')
     else:
-        return redirect('/home')
+        return redirect(url_for('home'))
 
 @app.route('/logout')
 def logout():
     if get_login_user_data() != None:
         session.pop('user_id')
-    return redirect('/login')
+    return redirect(url_for('login'))
 
 
 # for testing
@@ -210,7 +212,7 @@ def sign_up():
                 flash(f"There is already an account with email {email}. Please login or use different email.")
                 return render_template('signup.html')
             elif dup_user_name == True:
-                print("Duplicate Email")
+                print("Duplicate Username")
                 flash(f"Username {user_name} is taken, please choose different username.")
                 return render_template('signup.html')
             elif valid_zip['status'] == 'ZERO_RESULTS':
@@ -226,7 +228,7 @@ def sign_up():
                 engine.execute("INSERT INTO user (user_name, user_email, user_zip, "
                             "user_password) VALUES (?, ?, ?, ?);",
                             (user_name, email, address, hashed_pass))
-                return redirect('/login')
+                return redirect(url_for('login'))
         return render_template('signup.html')
     else:
         return redirect('buy_sell')
@@ -241,7 +243,7 @@ def buy_sell():
     if user_data != None:
         return render_template('buy_or_sell_page.html')
     else:
-        return redirect('/login')
+        return redirect(url_for('login'))
 
 
 @app.route('/item/<int:id>')
@@ -267,7 +269,7 @@ def get_item(id: int):
 
         return render_template('itempage.html', item=item_data, seller=seller_data, user_zip=user_place_id, seller_zip=seller_place_id, distance=distance_miles, API_KEY=API_KEY)
     else:
-        return redirect('/login')
+        return redirect(url_for('login'))
 
 
 @app.route('/user/<seller_id>', methods=['POST', 'GET'])
@@ -342,11 +344,11 @@ def send_email(seller_id: str):
                 server.sendmail(
                     sender_email, receiver_email, message.as_string()
                 )
-            return redirect('/buy_sell')
+            return redirect(url_for('home'))
         else:
             return render_template('send_email.html', seller_data=seller_data, buyer_data=buyer_data)
     else:
-        return redirect('/login')
+        return redirect(url_for('login'))
 
 
 @app.route('/send_report/<int:id>')
@@ -373,7 +375,7 @@ def send_report(id: int):
         smtp.quit()
         return "report sent!!"
     else:
-        return redirect('/login')
+        return redirect(url_for('login'))
 
 
 @app.route('/review/<int:id>', methods=["GET", "POST"])
@@ -383,7 +385,7 @@ def submit_review(id: int):
         connection = None
         id_num = 0
         if user_data is None:
-            return redirect('/error')
+            return redirect(url_for('error'))
         if request.method == 'POST':
             score = request.form.get('score', 'default score')
             rev_content = request.form.get('reviewContent', 'default content')
@@ -391,7 +393,7 @@ def submit_review(id: int):
             "VALUES (?, ?, ?, ?);", (int(score), rev_content, id, user_data["user_id"]))
         return render_template('review.html')
     else:
-        return redirect('/login')
+        return redirect(url_for('login'))
 
 
 
@@ -408,30 +410,39 @@ def sell_item():
         return 'adding item please wait a moment'''
     if user_data != None:
         if request.method == 'POST':
+            #Get Data
             item_name = request.form.get('name', 'default item name')
             price = request.form.get('price', 'default price')
             description = request.form.get('itemDesc', 'default description')
+
+            #Commit to Databse
+            engine.execute("INSERT INTO item (item_name, item_price, item_description, seller_id, active) "
+            "VALUES (?, ?, ?, ?, ?);", (item_name, price, description, user_data['user_id'], 1))
+
             id_num = 0
             try:
                 connection = engine.connect()
                 cursor = connection.execute("SELECT count(*) from item;")
                 result = cursor.scalar()
-                id_num = int(result) + 1
+                id_num = int(result)
             except:
                 print("something went wrong")
             finally:
                 if not connection.closed:
                     cursor.close()
                     connection.close()
-            engine.execute("INSERT INTO item (item_name, item_price, item_description, seller_id, active) "
-            "VALUES (?, ?, ?, ?, ?);", (item_name, price, description, user_data['user_id'], 1))
+            
+            print(id_num)
+
+
             photo = request.files['photo']
             filename = '{}.png'.format(id_num)
+
             photo.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            return redirect('/home')
+            return redirect(url_for('home'))
         return render_template('post_item.html')
     else:
-        return redirect('/login')
+        return redirect(url_for('login'))
 
 
 @app.route('/chat/<int:id>', methods=['POST', 'GET'])

@@ -16,9 +16,10 @@
                     </header>
                     <p>Files Supported: PNG, JPEG</p>
                     <div class="btn-wrapper">
-                        <button class="btn">Choose File</button>
-                        <input type="file" id="photo" for="photo" name="photo" accept=".png,.jpeg">
+                        <label for="photo">Upload Image</label>
+                        <input type="file" id="photo" for="photo" name="photo" accept=".png,.jpeg,.jpg" onchange='updateFile()'>
                     </div>
+                    <p id="file_name"></p>
                 </div>
                 <label for="item name">Item Name</label>
                 <div>
@@ -36,4 +37,15 @@
             </div>
         </div>
     </form>
+
+    <script>
+        file_name = document.getElementById('file_name');
+        photo_input = document.getElementById('photo');
+
+        function updateFile() {
+            var filename = photo_input.value.replace(/^.*[\\\/]/, '')
+            file_name.innerHTML = filename;
+        }
+        
+    </script>
 {% endblock content %}
