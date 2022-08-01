@@ -3,7 +3,6 @@ import googlemaps
 import os
 import bcrypt
 import sqlalchemy as db
-
 from flask import Flask, redirect, jsonify, request, render_template, url_for, flash, session
 from sqlalchemy import text
 from sqlalchemy import create_engine, MetaData
@@ -14,8 +13,6 @@ from email.mime.image import MIMEImage
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 import smtplib, ssl
-
-
 
 Base = declarative_base()
 
@@ -77,7 +74,7 @@ UPLOAD_FOLDER = 'static/images'
 app.config['SECRET_KEY'] = 'fec93d1b1cb7926beb25960608b25818'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 map_client = googlemaps.Client(API_KEY)
-Session = sessionmaker(engine)
+sqlal_session_gen = sessionmaker(engine)
 
 
 @app.route('/', methods=['POST', 'GET'])
@@ -93,9 +90,12 @@ def home():
     #Get item data
     results = None
     data = []
-    with Session.begin() as sess:
-        results = sess.execute(text('select * from item'))
+    with sqlal_session_gen.begin() as generated_session:
+        print("session: {}".format(generated_session))
+        results = generated_session.execute(text('select * from item'))
+        print("results: {}".format(results))
         for r in results:
+            print("r: {}".format(r))
             r_dict = dict(r)
 
             #Get Seller Name
@@ -118,14 +118,14 @@ def home():
 def login():
     user_data = get_login_user_data()
 
-    if user_data == None:
+    if user_data is None:
         if request.method == 'POST':
             email = request.form.get('email', 'default value email')
             password = request.form.get('password', 'default value password')
             try:
                 user_results = None
-                with Session.begin() as sess:
-                    user_results = sess.execute(text("select * from user where user_email='{}'".format(str(email))))
+                with sqlal_session_gen.begin() as generated_session:
+                    user_results = generated_session.execute(text("select * from user where user_email='{}'".format(str(email))))
                     for r in user_results:
                         user_data = dict(r)
                 if bcrypt.checkpw(bytes(password, encoding='utf8'), user_data['user_password']):
@@ -145,18 +145,19 @@ def login():
 
 @app.route('/logout')
 def logout():
-    if get_login_user_data() != None:
+    user_data = get_login_user_data()
+    if user_data is not None:
         session.pop('user_id')
     return redirect(url_for('login'))
 
 
 # for testing
-@app.route('/user')
-def get_user():
+@app.route('/users')
+def get_users_data():
     results = None
     data = []
-    with Session.begin() as session:
-        results = session.execute(text('select * from user'))
+    with sqlal_session_gen.begin() as generated_session:
+        results = generated_session.execute(text('select * from user'))
         for r in results:
             data.append(dict(r))
     return str(data)
@@ -166,9 +167,8 @@ def get_user():
 def get_review_data():
     results = None
     data = []
-
-    with Session.begin() as session:
-        results = session.execute(text('select * from review'))
+    with sqlal_session_gen.begin() as generated_session:
+        results = generated_session.execute(text('select * from review'))
         for r in results:
             data.append(dict(r))
     return str(data)
@@ -181,7 +181,7 @@ def sign_up():
     will need an output from the template in order to add the new user to the database
     """
     user_data = get_login_user_data()
-    if user_data == None:
+    if user_data is None:
         if request.method == 'POST':
             user_name = request.form.get('userName', 'default value name')
             email = request.form.get('email', 'default value email')
@@ -190,11 +190,11 @@ def sign_up():
             #Check for duplicate email/username
             dup_email = False
             dup_user_name = False
-            with Session.begin() as sess:
-                user_results = sess.execute(text('SELECT * FROM user WHERE user_email="{}"'.format(str(email))))
+            with sqlal_session_gen.begin() as generated_session:
+                user_results = generated_session.execute(text('SELECT * FROM user WHERE user_email="{}"'.format(str(email))))
                 for ur in user_results:
                     dup_email = True
-                user_results = sess.execute(text('SELECT * FROM user WHERE user_name="{}"'.format(str(user_name))))
+                user_results = generated_session.execute(text('SELECT * FROM user WHERE user_name="{}"'.format(str(user_name))))
                 for ur in user_results:
                     dup_user_name = True
 
@@ -240,7 +240,7 @@ def buy_sell():
     '''
     Display buy or sell page
     '''
-    if user_data != None:
+    if user_data is not None:
         return render_template('buy_or_sell_page.html')
     else:
         return redirect(url_for('login'))
@@ -252,9 +252,9 @@ def get_item(id: int):
     item_data = {}
     seller_data = {}
 
-    if user_data != None:
-        with Session.begin() as session:
-            item_results = session.execute(text('select * from item where item_id={}'.format(id)))
+    if user_data is not None:
+        with sqlal_session_gen.begin() as generated_session:
+            item_results = generated_session.execute(text('select * from item where item_id={}'.format(id)))
             for ir in item_results:
                 item_data = dict(ir)
         seller_data = get_user_data_by_id(item_data['seller_id'])
@@ -280,7 +280,7 @@ def user(seller_id: str):
     #Get Seller Data
     seller_data = get_user_data_by_id(seller_id)
 
-    if seller_data != None:
+    if seller_data is not None:
         return render_template('user.html', user_data=user_data, seller=seller_data)
     else:
         return render_template('error.html')
@@ -294,7 +294,7 @@ def send_email(seller_id: str):
     seller_data = {}
     buyer_data = {}
 
-    if user_data != None:
+    if user_data is not None:
         #Get Data
         seller_data = get_user_data_by_id(seller_id)
         buyer_data = get_user_data_by_id(user_data['user_id'])
@@ -354,7 +354,7 @@ def send_email(seller_id: str):
 @app.route('/send_report/<int:id>')
 def send_report(id: int):
     user_data = get_login_user_data()
-    if user_data != None:
+    if user_data is not None:
         reported_data = get_user_data_by_id(id)
         smtp = smtplib.SMTP('smtp.gmail.com', 587)
         smtp.ehlo()
@@ -381,7 +381,7 @@ def send_report(id: int):
 @app.route('/review/<int:id>', methods=["GET", "POST"])
 def submit_review(id: int):
     user_data = get_login_user_data()
-    if user_data != None:
+    if user_data is not None:
         connection = None
         id_num = 0
         if user_data is None:
@@ -408,7 +408,7 @@ def sell_item():
     if request.method == 'POST':
         user = request.form
         return 'adding item please wait a moment'''
-    if user_data != None:
+    if user_data is not None:
         if request.method == 'POST':
             #Get Data
             item_name = request.form.get('name', 'default item name')
@@ -445,43 +445,59 @@ def sell_item():
         return redirect(url_for('login'))
 
 
+@app.route('/chat', methods=['POST', 'GET'])
+def view_all_messages():
+    msg_data = {}
+    users_current_sent_to_data = []
+    users_current_got_from_data = []
+    users_current_commed_with = []
+    user_data = get_login_user_data()
+    if user_data is not None:
+        if request.method == 'GET':
+            with sqlal_session_gen.begin() as generated_session:
+                users_current_sent_to_results = generated_session.execute(text("SELECT receiver_id FROM ("
+                    "SELECT receiver_id, max(message_id) FROM (SELECT receiver_id, message_id, sender_id FROM message WHERE sender_id={}) z "
+                    " GROUP BY receiver_id "
+                    "ORDER BY message_id desc"
+                    ") t ".format(user_data["user_id"])))
+                for ucstr in users_current_sent_to_results:
+                    users_current_sent_to_data.append(int(ucstr['receiver_id']))
+                print(users_current_sent_to_data)
+
+            with sqlal_session_gen.begin() as generated_session:
+                users_current_got_from_results = generated_session.execute(text("SELECT sender_id FROM ("
+                    "SELECT sender_id, max(message_id) FROM (SELECT receiver_id, message_id, sender_id FROM message WHERE receiver_id={}) z"
+                    " GROUP BY sender_id "
+                    "ORDER BY message_id desc"
+                    ") t ".format(user_data["user_id"])))
+                print(users_current_got_from_results)
+                for ucgfr in users_current_got_from_results:
+                    print(ucgfr)
+                    users_current_got_from_data.append(int(ucgfr['sender_id']))
+                print(users_current_got_from_data)
+                
+            users_current_commed_with.extend(users_current_sent_to_data)
+            users_current_commed_with.extend(users_current_got_from_data)
+        return render_template('message.html', users_list=users_current_commed_with)
+    else:
+        return redirect('/login')
+
 @app.route('/chat/<int:id>', methods=['POST', 'GET'])
 def message(id: int):
-
+    seller_data = {}
     user_data = get_login_user_data()
-    if user_data != None:
-        msg_data = {}
+    if user_data is not None:
+        with sqlal_session_gen.begin() as generated_session:
+            seller_results = generated_session.execute(text('select * from user where user_id={}'.format(id)))
+            for sr in seller_results:
+                seller_data = dict(sr)
         if request.method == 'POST':
             msg_content = request.form.get('messageContent', 'default content')
-            engine.execute("INSERT INTO message (sender_id, receiver_id, message_content) VALUES (?, ?, ?);", 
+            engine.execute("INSERT INTO message (sender_id, receiver_id, message_content) VALUES (?, ?, ?);",
             (user_data["user_id"], id, msg_content))
-
-        with Session.begin() as session:
-            msg_results = session.execute(text("SELECT message_content FROM message WHERE receiver_id "
-                                               "= {} ".format(user_data['user_id'])))
-            sender_results = session.execute(text("SELECT user_name FROM user WHERE user_id = "
-                                                  "{}".format(id)))
-            receiver_results = session.execute(text("SELECT user_name FROM user WHERE user_id = "
-                                                    "{}".format(user_data['user_id'])))
-            senders = {}
-            receivers = {}
-            for msg in msg_results:
-                msg_data = dict(msg)
-            for sends in sender_results:
-                senders = dict(sends)
-            for recs in receiver_results:
-                receivers = dict(recs)
-            values = []
-            for key, val in msg_data.items():
-                values.append(val)
-            for key, val in senders.items():
-                the_sender = val
-            for key, val in receivers.items():
-                the_receiver = val
-            print(values)
-            print(senders)
-        return render_template('message.html', receiver=the_receiver, sender=the_sender, messages=values)
-    return render_template('message.html')
+        return render_template('dm.html', receiver=seller_data["user_name"] )
+    else:
+        return redirect('/login')
 
 @app.route('/error')
 def display_error():
@@ -497,8 +513,8 @@ def get_login_user_data():
         return None
 
 def get_user_data_by_id(id):
-    with Session.begin() as sess:
-        user_results = sess.execute(text('select * from user where user_id={}'.format(id)))
+    with sqlal_session_gen.begin() as generated_session:
+        user_results = generated_session.execute(text('select * from user where user_id={}'.format(id)))
         for ur in user_results:
             return ur
 
