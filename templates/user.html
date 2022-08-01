@@ -1,0 +1,11 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h1> {{ seller['user_name'] }} </h1>
+<div style="margin-left: 40vh; margin-top: 50px;">
+    <button type="submit" id="review-btn"><a href="/review/{{ seller['user_id'] }}">Review</a></button>
+    <button type="submit" id="msg-btn"><a href="/chat/{{ seller['user_id'] }}">Message</a></button>
+    <button type="submit" id="report-btn"><a href="/send_report/{{ seller['user_id'] }}">Report Seller</a></button>
+</div>
+
+{% endblock content %}

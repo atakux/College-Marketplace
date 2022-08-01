@@ -2,7 +2,7 @@
 {% block content %}
     <head><link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}"></head>
     <div class="background">
-        {% if user_data == false %}
+        {% if user_data == None %}
             <h1 class="welcome">Welcome to College Marketplace</h1>
         {% else %}
             <h1 class="welcome">Welcome, {{ user_data['user_name'] }}</h1>
@@ -20,20 +20,21 @@
             -->
 
             <div style="--animation-order: {{ loop.index }};" class="item reveal">
-                <img src="{{ url_for('static', filename='images/' + actual_item['item_id']|string + '.png') }}" class="center" style="max-width: 370px">
+                <a href="/item/{{ actual_item['item_id'] }}"><img src="{{ url_for('static', filename='images/' + actual_item['item_id']|string + '.png') }}" class="center" style="max-width: 370px; max-height: 200px;"></a>
                 <div class="item-name"><a href="/item/{{ actual_item['item_id'] }}">{{ actual_item['item_name'] }}</a></div>
                 <div class="price">
                     <div>
-                        <p class="tag">
-                            Price:
-                        </p>
-                        ${{ actual_item['item_price'] }}
+                        <p class="tag">Price: </p>${{ actual_item['item_price'] }}
                     </div>
                     <div>
-                        <p class="tag">
-                            Seller:
-                        </p>
-                        <a href="">{{ actual_item['seller_name'] }}</a>
+                        <p class="tag">Seller: </p><a href="/user/{{ actual_item['seller_id'] }}">{{ actual_item['seller_name'] }}</a>
+                    </div>
+                    <div>
+                        {% if actual_item['distance'] > 5 %}
+                            <p class="tag">Distance: </p>{{ actual_item['distance'] }} Miles
+                        {% else %}
+                            <p class="tag">Distance: </p>Nearby
+                        {% endif %}
                     </div>
                     
                 </div>
