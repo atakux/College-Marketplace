@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+{% block content %}
+    <head><link rel="stylesheet" href="{{ url_for('static', filename='css/manage_item.css') }}"></head>
+    {% include "dashboard.html" %}
+        <div class="item-list">
+            {% for actual_item in item_list %}
+            <div class="item">
+                <img src="{{ url_for('static', filename='images/' + actual_item['item_id']|string + '.png') }}" class="center">
+                <div class="item-name"><a href="/item/{{ actual_item['item_id'] }}">{{ actual_item['item_name'] }}</a></div>
+                <div class="price">
+                    <p class="tag">Price: </p>${{ actual_item['item_price'] }}
+                </div>
+                <div><button class="delete">Delete</button></div>
+            </div>
+            {% endfor %}
+        </div>
+{% endblock content %}
