@@ -132,7 +132,10 @@ def login():
                     session['user_id'] = user_data['user_id']
                     print("successful login")
                     return redirect('/')
+                else:
+                    flash("The username and/or password is incorrect, please try again.")
             except Exception as ex:
+                flash("The username and/or password is incorrect, please try again.")
                 print("error" + str(ex))
         return render_template('signin.html')
     else:
