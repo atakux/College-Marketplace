@@ -126,7 +126,7 @@ def login():
                 print("error" + str(ex))
         return render_template('signin.html')
     else:
-        return redirect('buy_sell')
+        return redirect('/home')
 
 @app.route('/logout')
 def logout():
