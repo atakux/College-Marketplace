@@ -91,11 +91,8 @@ def home():
     results = None
     data = []
     with sqlal_session_gen.begin() as generated_session:
-        print("session: {}".format(generated_session))
         results = generated_session.execute(text('select * from item'))
-        print("results: {}".format(results))
         for r in results:
-            print("r: {}".format(r))
             r_dict = dict(r)
 
             #Get Seller Name
@@ -461,24 +458,19 @@ def view_all_messages():
                     "ORDER BY message_id desc".format(user_data["user_id"])))
                 for ucstr in users_current_sent_to_results:
                     users_current_sent_to_data.append(dict(ucstr))
-                print(users_current_sent_to_data)
 
             with sqlal_session_gen.begin() as generated_session:
                 users_current_got_from_results = generated_session.execute(text("SELECT sender_id AS important_id, "
                     "max(message_id) AS message_num, message_content FROM (SELECT receiver_id, message_id, sender_id, message_content FROM message WHERE receiver_id={}) z"
                     " GROUP BY important_id "
                     "ORDER BY message_id desc".format(user_data["user_id"])))
-                print(users_current_got_from_results)
                 for ucgfr in users_current_got_from_results:
-                    print(ucgfr)
                     users_current_got_from_data.append(dict(ucgfr))
-                print(users_current_got_from_data)
             
 
             users_current_commed_with.extend(users_current_sent_to_data)
             users_current_commed_with.extend(users_current_got_from_data)
             data = sorted(users_current_commed_with, key=lambda x:x['message_num'], reverse=True)
-            print(data)
             data_dict = {}
             dupe_indices = []
             for index in range(len(data)):
@@ -486,9 +478,6 @@ def view_all_messages():
                     dupe_indices.append(index)
                 else:
                     data_dict[data[index]['important_id']] = data[index]['message_num']
-            print("dict of data: {}".format(data_dict))
-            print("indice of duplicates: {}".format(dupe_indices))
-            print("data: {}".format(data))
             dupe_list = reversed(dupe_indices)
             for dupe in dupe_list:
                 data.pop(dupe)
