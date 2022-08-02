@@ -537,20 +537,11 @@ def manage():
             #Update
             engine.execute(f"UPDATE item SET item_name='{item_name}', item_price={price}, item_description='{description}', active={status} WHERE item_id={item_id}")
             return redirect(url_for('manage'))
-
-                #Update
-                engine.execute(f"UPDATE item SET item_name='{item_name}', item_price={price}, item_description='{description}', active={status} WHERE item_id={item_id}")
-                return redirect(url_for('manage'))
-
-            return render_template('manage_item.html', item_list=data)
-        elif user_data['user_status'] == 0:
-            flash('You must verify your email to do this action')
-            return redirect(url_for('home'))
     else:
         session['next'] = url_for('manage')
         return redirect(url_for('login'))
 
-
+"""
 @app.route('/chat', methods=['POST', 'GET'])
 def view_all_messages():
     msg_data = {}
@@ -606,35 +597,83 @@ def view_all_messages():
             return redirect(url_for('home'))
     else:
         return redirect('/login')
+"""
 
 
+@app.route('/chat', methods=['POST', 'GET'])
+@app.route('/chat/', methods=['POST', 'GET'])
 @app.route('/chat/<int:id>', methods=['POST', 'GET'])
-def message(id: int):
+def message(id: int=0):
+    data = []
+    msg_data = {}
+    users_current_sent_to_data = []
+    users_current_got_from_data = []
+    users_current_commed_with = []
+
     other_user_data = {}
     list_of_messages = []
     user_data = get_login_user_data()
     if user_data is not None:
-        if user_data['user_status'] == 1:
+        #Left Signature
+        with sqlal_session_gen.begin() as generated_session:
+            users_current_sent_to_results = generated_session.execute(text("SELECT receiver_id AS important_id, "
+                "max(message_id) AS message_num, message_content, user_name FROM (SELECT receiver_id, message_id, sender_id,"
+                " message_content, user_name FROM message JOIN user ON receiver_id=user_id WHERE sender_id={}) z "
+                " GROUP BY important_id "
+                "ORDER BY message_id desc".format(user_data["user_id"])))
+            for ucstr in users_current_sent_to_results:
+                users_current_sent_to_data.append(dict(ucstr))
+
+        with sqlal_session_gen.begin() as generated_session:
+            users_current_got_from_results = generated_session.execute(text("SELECT sender_id AS important_id, "
+                "max(message_id) AS message_num, message_content, user_name FROM (SELECT receiver_id, message_id, sender_id,"
+                " message_content, user_name FROM message JOIN user ON sender_id=user_id WHERE receiver_id={}) z"
+                " GROUP BY important_id "
+                "ORDER BY message_id desc".format(user_data["user_id"])))
+            for ucgfr in users_current_got_from_results:
+                users_current_got_from_data.append(dict(ucgfr))
+        
+
+        users_current_commed_with.extend(users_current_sent_to_data)
+        users_current_commed_with.extend(users_current_got_from_data)
+        data = sorted(users_current_commed_with, key=lambda x:x['message_num'], reverse=True)
+        data_dict = {}
+        dupe_indices = []
+        for index in range(len(data)):
+            if data[index]['important_id'] in data_dict.keys():
+                dupe_indices.append(index)
+            else:
+                data_dict[data[index]['important_id']] = data[index]['message_num']
+        dupe_list = reversed(dupe_indices)
+        for dupe in dupe_list:
+            data.pop(dupe)
+        
+        #Get Current Data
+        if id != 0:
             if user_data["user_id"] == id:
-                return redirect('/chat')
+                return redirect('/home')
+
+            #Get other user data
             with sqlal_session_gen.begin() as generated_session:
                 other_user_results = generated_session.execute(text('select * from user where user_id={}'.format(id)))
                 for oud in other_user_results:
                     other_user_data = dict(oud)
+
+            #Get List of Messages
             with sqlal_session_gen.begin() as generated_session:
                 message_results = generated_session.execute(text("select * from message where "
                 "(sender_id={} and receiver_id={}) or (sender_id={} and receiver_id={})".format(user_data['user_id'],
                 other_user_data['user_id'], other_user_data['user_id'], user_data['user_id'])))
                 for mr in message_results:
                     list_of_messages.append(dict(mr))
+
+            #Post
             if request.method == 'POST':
                 msg_content = request.form.get('messageContent', 'default content')
                 engine.execute("INSERT INTO message (sender_id, receiver_id, message_content) VALUES (?, ?, ?);",
                 (user_data["user_id"], id, msg_content))
-            return render_template('dm.html', sender=user_data, receiver=other_user_data, message_list=list_of_messages)
-        elif user_data['user_status'] == 0:
-            flash('You must verify your email to do this action')
-            return redirect(url_for('home'))
+                return redirect(url_for('message', id=id))
+        return render_template('message.html', sender=user_data, receiver=other_user_data, message_list=list_of_messages, users_list=data)
     else:
         return redirect('/login')
 
