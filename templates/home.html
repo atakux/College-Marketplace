@@ -41,12 +41,12 @@
                 <a href="/item/{{ actual_item['item_id'] }}"><button class="purchase button">See More</button></a>
             </div>
         {% endfor %}
-
     </div>
-    {% if products|length < 1 %}
+    
+    {% if item_list|length < 1 %}
         <div style="text-align:center;">
             <h1>No Listed Items</h1>
-            <button class="button" onclick="location.href='/sell';">List The First Item!</button>
+            <button class="button" onclick="location.href='/sell'">List Item</button>
         </div>
     {% endif %}
 {% endblock content %}
