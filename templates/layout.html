@@ -7,18 +7,20 @@
     <link href="https://fonts.googleapis.com/css?family=Poppins&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://code.iconify.design/2/2.1.0/iconify.min.js"></script>
     <script type="text/javascript" src="static/js/index.js"></script>
     <title>College Marketplace</title>
 </head>
 
 <body>
     <div class="navbar">
-        <div class="title"><a href="/home">College Marketplace</a></div>
+        <div class="title"><a href="/home"> <img class="hat-icon" src="static/images/icon-park-degree-hat@2x.svg" /> <div style="float: right; margin-left: 16px; font-size: 32px;">College Marketplace</div> </a></div>
         <input class="search" id="searchBar" type="search" placeholder="Search">
         {% if user_data == None %}
             <button class="button" onclick="location.href='/login';">Login/Signup</button>
         {% else %}
             <div class="dropdown">
+                <!-- <img class="profile-icon" src="static/images/healthicons-ui-user-profile@2x.svg" /> -->
                 <div class="dropdown-content">
                     <div class="drop-btn" onclick="location.href='/manage';">Dashboard</div>
                     <div class="drop-btn" style="padding-bottom: 7px; padding-top: 7px;" onclick="location.href='/sell';">List Item</div>
