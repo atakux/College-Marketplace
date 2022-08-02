@@ -158,8 +158,12 @@ def login(next_path=None):
                     for r in user_results:
                         user_data = dict(r)
                 if bcrypt.checkpw(bytes(password, encoding='utf8'), user_data['user_password']):
-                    session['user_id'] = user_data['user_id']
-                    print("successful login")
+                    if user_data['user_status'] == 2:
+                        redirect(url_for('login'))
+                        flash("You have been banned!", category="is-danger")
+                    else:
+                        session['user_id'] = user_data['user_id']
+                        print("successful login")
                     if 'next' in session:
                         url = session['next']
                         session.pop('next')
@@ -187,27 +191,19 @@ def logout():
 
 
 # for testing
-@app.route('/users')
-def get_users_data():
+@app.route('/<table_name>')
+def get_table_data(table_name: str):
     results = None
     data = []
-    with sqlal_session_gen.begin() as generated_session:
-        results = generated_session.execute(text('select * from user'))
-        for r in results:
-            data.append(dict(r))
-    return str(data)
+    try:
+        with sqlal_session_gen.begin() as generated_session:
+            results = generated_session.execute(text('select * from {}'.format(table_name)))
+            for r in results:
+                data.append(dict(r))
+        return str(data)
+    except:
+        return "invalid table name (probably)"
 
-
-# for testing
-@app.route('/reviews')
-def get_review_data():
-    results = None
-    data = []
-    with sqlal_session_gen.begin() as generated_session:
-        results = generated_session.execute(text('select * from review'))
-        for r in results:
-            data.append(dict(r))
-    return str(data)
 
 
 @app.route('/sign_up', methods=['POST', 'GET'])
@@ -614,6 +610,17 @@ def message(id: int):
         return render_template('dm.html', sender=user_data, receiver=other_user_data, message_list=list_of_messages)
     else:
         return redirect('/login')
+
+
+@app.route('/idontwantanyonetoaccidentallyban')
+def ban_current_user():
+    user_data = get_login_user_data()
+    if user_data is not None:
+        engine.execute("UPDATE user SET user_status=2 WHERE user_id={}".format(user_data['user_id']))
+        engine.execute("UPDATE item SET active=0 WHERE seller_id={}".format(user_data['user_id']))
+        return redirect(url_for('logout'))
+    return "your account has been banned"
+
 
 @app.route('/error')
 def display_error():
