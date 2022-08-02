@@ -129,8 +129,8 @@ def search(query=""):
     #Get item data
     results = None
     data = []
-    with Session.begin() as sess:
-        results = sess.execute(text('SELECT * FROM item ORDER BY item_id DESC'))
+    with sqlal_session_gen.begin() as generated_session:
+        results = generated_session.execute(text('SELECT * FROM item ORDER BY item_id DESC'))
         for r in results:
             r_dict = dict(r)
 
@@ -518,8 +518,8 @@ def manage():
     data = []
     if user_data is not None:
         #Get Data
-        with Session.begin() as sess:
-            results = sess.execute(text('SELECT * FROM item WHERE seller_id={} ORDER BY item_id DESC'.format(user_data['user_id'])))
+        with sqlal_session_gen.begin() as generated_session:
+            results = generated_session.execute(text('SELECT * FROM item WHERE seller_id={} ORDER BY item_id DESC'.format(user_data['user_id'])))
             for r in results:
                 r_dict = dict(r)
                 data.append(r_dict)
@@ -555,7 +555,8 @@ def view_all_messages():
         if request.method == 'GET':
             with sqlal_session_gen.begin() as generated_session:
                 users_current_sent_to_results = generated_session.execute(text("SELECT receiver_id AS important_id, "
-                    "max(message_id) AS message_num, message_content FROM (SELECT receiver_id, message_id, sender_id, message_content FROM message WHERE sender_id={}) z "
+                    "max(message_id) AS message_num, message_content, user_name FROM (SELECT receiver_id, message_id, sender_id,"
+                    " message_content, user_name FROM message JOIN user ON receiver_id=user_id WHERE sender_id={}) z "
                     " GROUP BY important_id "
                     "ORDER BY message_id desc".format(user_data["user_id"])))
                 for ucstr in users_current_sent_to_results:
@@ -563,7 +564,8 @@ def view_all_messages():
 
             with sqlal_session_gen.begin() as generated_session:
                 users_current_got_from_results = generated_session.execute(text("SELECT sender_id AS important_id, "
-                    "max(message_id) AS message_num, message_content FROM (SELECT receiver_id, message_id, sender_id, message_content FROM message WHERE receiver_id={}) z"
+                    "max(message_id) AS message_num, message_content, user_name FROM (SELECT receiver_id, message_id, sender_id,"
+                    " message_content, user_name FROM message JOIN user ON sender_id=user_id WHERE receiver_id={}) z"
                     " GROUP BY important_id "
                     "ORDER BY message_id desc".format(user_data["user_id"])))
                 for ucgfr in users_current_got_from_results:
