@@ -10,7 +10,7 @@
         <div>
             <button class="button" onclick="location.href='/chat/{{other_user['important_id']}}'"> 
             <h2>{{ other_user['user_name'] }} </h2>
-            <p>{{ other_user['message_content'] }}</p>
+            <p style="font-weight: 500; margin-top: 10px;">{{ other_user['message_content'] }}</p>
             </button>
         </div>
     {% endfor %}
@@ -19,26 +19,22 @@
 <div class='container'>
     <!--Get Messages-->
     <div class='messages'>
-    <div style="height: 500px; overflow: auto; ">
+    <div style="display: flex;flex-direction: column; height: 500px; overflow: auto; ">
     {% for message in message_list %}
         {% if message['sender_id'] == sender['user_id'] %}
-            <h1>You said:</h1>
-            <p>{{message['message_content']}}</p>
-            <br>
+            <p class="sent">{{message['message_content']}}</p>
         {% else %}
-            <h1> {{receiver['user_name']}} said: </h1>
-            <p> {{message['message_content']}} </p>
-            <br>
+            <!-- <h1> {{receiver['user_name']}} said: </h1> -->
+            <p class="received"> {{message['message_content']}} </p>
         {% endif %}
     {% endfor %}
     </div>
 
     <form method="POST">
-        <label for="message content">Message Content</label>
         <div>
-            <textarea name="messageContent" id="message content" placeholder="Send a message to {{ receiver['user_name'] }}..." required></textarea>
+            <textarea name="messageContent" id="message content" class="message-content" placeholder="Send a message to {{ receiver['user_name'] }}..." required></textarea>
         </div>
-        <button class="" type="submit" id="btn">Send</button>
+        <button class="send" type="submit" id="btn">Send</button>
     </form>
     </div>
 </div>
