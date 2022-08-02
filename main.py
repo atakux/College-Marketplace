@@ -537,6 +537,7 @@ def manage():
             #Update
             engine.execute(f"UPDATE item SET item_name='{item_name}', item_price={price}, item_description='{description}', active={status} WHERE item_id={item_id}")
             return redirect(url_for('manage'))
+        return render_template('manage_item.html', item_list=data)
     else:
         session['next'] = url_for('manage')
         return redirect(url_for('login'))
