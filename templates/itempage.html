@@ -20,7 +20,11 @@
         <div class="details">
             <div class="item-name">{{ item['item_name'] }} </div>
             <div class="price"><p class="tag">Price:</p> ${{ item['item_price'] }}</div>
-            <button style="font-size: 22px;" class="button" type="submit" id="btn"><a href="/chat/{{ seller['user_id'] }}">Message Seller</a></button>
+            {% if item['active'] == 1 %}
+                <button style="font-size: 22px;" class="button" type="submit" id="btn"><a href="/chat/{{ seller['user_id'] }}">Message Seller</a></button>
+            {% else %}
+                <button style="font-size: 22px; background-color: rgba(167, 203, 250);" class="button" id="btn">Item Unavailable</button>
+            {% endif %}
         </div>
     </div>
 
