@@ -34,7 +34,7 @@
     {% for review in review_list %}
 
             <div>
-            <h3> <a href="/user/{{ review['user_id'] }}">{{review['user_name']}}</a>gave this user: {{review['review_score']}}</h3>
+            <h3> <a href="/user/{{ review['user_id'] }}">{{review['user_name']}}</a> gave this user a {{review['review_score']}}/10</h3>
             <p> {{review['review_text']}} </p>
             </div>
 

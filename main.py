@@ -328,88 +328,6 @@ def get_item(id: int):
         return redirect(url_for('login'))
 
 
-@app.route('/user/<seller_id>', methods=['POST', 'GET'])
-def user(seller_id: str):
-    user_data = get_login_user_data()
-    seller_data = None
-
-    # Get Seller Data
-    seller_data = get_user_data_by_id(seller_id)
-
-    if seller_data is not None:
-        return render_template('user.html', user_data=user_data, seller=seller_data)
-    else:
-        return render_template('error.html')
-
-
-@app.route('/send_email/<seller_id>', methods=['POST', 'GET'])
-def send_email(seller_id: str):
-    """Allows you send email to the user of associated id"""
-    user_data = get_login_user_data()
-    seller_data = {}
-    buyer_data = {}
-
-    if user_data is not None:
-        #Get Data
-        seller_data = get_user_data_by_id(seller_id)
-        buyer_data = get_user_data_by_id(user_data['user_id'])
-
-        if user_data['user_status'] == 1:
-            if request.method == 'POST':
-                # Send Email
-                # https://realpython.com/python-send-email/#option-1-setting-up-a-gmail-account-for-development
-                subject = request.form.get('subject', '')
-                message_text = request.form.get('message', '')
-
-                sender_email = EMAIL_ADDRESS
-                sender_password = EMAIL_APP_PASSWORD
-                receiver_email = seller_data['user_email']
-
-                message = MIMEMultipart("alternative")
-                message["Subject"] = f"CMP Message from {buyer_data['user_name']} - {subject}"
-                message["From"] = sender_email
-                message["To"] = receiver_email
-
-                # Create the plain-text and HTML version of your message
-                text = message_text
-                html = """\
-                <html>
-                <body>
-                    <p>{}</p>
-                    <br>
-                    <p>To reply, please click this link: <a href="" target="_blank_"></a></p>
-                </body>
-                </html>
-                """.format(message_text.replace('\n', "<br>"))
-                print(text)
-                print(html)
-
-                # Turn these into plain/html MIMEText objects
-                part1 = MIMEText(text, "plain")
-                part2 = MIMEText(html, "html")
-
-                # Add HTML/plain-text parts to MIMEMultipart message
-                # The email client will try to render the last part first
-                message.attach(part1)
-                message.attach(part2)
-
-                # Create secure connection with server and send email
-                context = ssl.create_default_context()
-                with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
-                    server.login(sender_email, sender_password)
-                    server.sendmail(
-                        sender_email, receiver_email, message.as_string()
-                    )
-                return redirect(url_for('home'))
-            else:
-                return render_template('send_email.html', seller_data=seller_data, buyer_data=buyer_data)
-        elif user_data['user_status'] == 0:
-            flash('You must verify your email to do this action')
-            return redirect(url_for('home'))
-    else:
-        return redirect(url_for('login'))
-
-
 @app.route('/send_report/<int:id>')
 def send_report(id: int):
     user_data = get_login_user_data()
@@ -552,43 +470,41 @@ def manage():
         return redirect(url_for('login'))
 
 
-@app.route('/user_profile/<int:id>', methods=['POST', 'GET'])
+@app.route('/user/<int:id>', methods=['POST', 'GET'])
 def user_profile(id: int):
-    review_list = []
+    review_data = []
     users = []
     user_data = get_login_user_data()
+    item_data = []
 
-    if user_data['user_id'] == id:
-        return redirect(url_for('personal_profile'))
-    else:
-        with sqlal_session_gen.begin() as sess:
-
-            review_results = sess.execute(text("SELECT * FROM review "
-                                               "WHERE seller_id={}".format(id)))
-            seller_data = get_user_data_by_id(id)
-            seller_items = get_item_by_uid(id)
-
+    if user_data is not None:
+        
+        with sqlal_session_gen.begin() as generated_session:
+            review_results = generated_session.execute(text("SELECT * FROM review JOIN user ON user.user_id=review.user_id "
+                                                "WHERE seller_id={}".format(id)))
             for review in review_results:
-                review_list.append(dict(review))
+                review_data.append(dict(review))
 
-            for review_dict in review_list:
-                for key, val in review_dict.items():
-                    if key == 'user_id':
-                        print(val)
-                        users.append(get_user_name_by_id(val))
+        seller_data = get_user_data_by_id(id)
+        
+        with sqlal_session_gen.begin() as generated_session:
+            item_results = generated_session.execute(text("SELECT * FROM item"
+                                                " WHERE seller_id={}".format(id)))
+            for item in item_results:
+                item_data.append(dict(item))
+        
+        if request.method == 'POST':
+                score = request.form.get('score', 'default score')
+                rev_content = request.form.get('reviewContent', 'default content')
+                engine.execute("INSERT INTO review (review_score, review_text, seller_id, user_id) "
+                               "VALUES (?, ?, ?, ?);", (int(score), rev_content, id, user_data["user_id"]))
 
-            usernames = [item for unames in users for item in unames]
-            print(usernames)
-            print(review_list)
+        return render_template('user.html', item_list=item_data, review_list=review_data, 
+        seller_data=seller_data, user_data=user_data)
+    else:
+        session['next'] = url_for('sell_item')
+        return redirect(url_for('login'))
 
-        return render_template('user.html', item_list=seller_items, review_list=review_list, seller_data=seller_data, user_ids=usernames, user_data=user_data)
-
-
-@app.route('/personal_profile')
-def personal_profile():
-    user_data = get_login_user_data()
-
-    return render_template('personal_profile.html')
 
 
 @app.route('/chat', methods=['POST', 'GET'])
