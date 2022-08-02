@@ -1,26 +1,32 @@
 {% extends "layout.html" %}
 {% block content %}
     <head><link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}"></head>
+    <div>
+        <br><br>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="notification is-danger">
+                    {{ messages[0] }}
+                </div>
+            {% endif %}
+        {% endwith %}
+    </div>
     <div class="background">
-        {% if user_data == None %}
+        {% if search_query == "" %}
+            <h2 class="welcome">Showing All Listings</h2>
+        {% elif search_query != None %}
+            <h2 class="welcome">Showing results for "{{ search_query }}"</h2>
+        {% elif user_data == None %}
             <h1 class="welcome">Welcome to College Marketplace</h1>
         {% else %}
             <h1 class="welcome">Welcome, {{ user_data['user_name'] }}</h1>
         {% endif %}
     </div>
+    
     <div class="item-list">
-
         {% for actual_item in item_list %}
-            <!--
-            <div>
-                <img src="{{ url_for('static', filename='images/' + actual_item['item_id']|string + '.png') }}" class="center" style="max-width: 512px">
-                <h1><a href="/item/{{actual_item['item_id']}}">{{ actual_item['item_name'] }}</a></h1>
-                <h2>Price: {{ actual_item['item_price'] }}</h2>
-            </div>
-            -->
-
             <div style="--animation-order: {{ loop.index }};" class="item reveal">
-                <a href="/item/{{ actual_item['item_id'] }}"><img src="{{ url_for('static', filename='images/' + actual_item['item_id']|string + '.png') }}" class="center" style="max-width: 370px; max-height: 200px;"></a>
+                <a href="/item/{{ actual_item['item_id'] }}"><img src="{{ url_for('static', filename='images/' + actual_item['item_id']|string + '.png') }}" class="center" style="max-width: 320px; max-height: 180px;"></a>
                 <div class="item-name"><a href="/item/{{ actual_item['item_id'] }}">{{ actual_item['item_name'] }}</a></div>
                 <div class="price">
                     <div>
@@ -30,11 +36,7 @@
                         <p class="tag">Seller: </p><a href="/user/{{ actual_item['seller_id'] }}">{{ actual_item['seller_name'] }}</a>
                     </div>
                     <div>
-                        {% if actual_item['distance'] > 5 %}
-                            <p class="tag">Distance: </p>{{ actual_item['distance'] }} Miles
-                        {% else %}
-                            <p class="tag">Distance: </p>Nearby
-                        {% endif %}
+                        <p class="tag">Zip Code: </p> {{ actual_item['zip_code'] }}
                     </div>
                     
                 </div>
@@ -42,4 +44,11 @@
             </div>
         {% endfor %}
     </div>
+    
+    {% if item_list|length < 1 %}
+        <div style="text-align:center;">
+            <h1>No Listed Items</h1>
+            <button class="button" onclick="location.href='/sell'">List Item</button>
+        </div>
+    {% endif %}
 {% endblock content %}

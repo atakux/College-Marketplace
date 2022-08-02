@@ -16,7 +16,7 @@
 
 <body>
     <div class="container">
-        <img src="{{ url_for('static', filename='images/' + item['item_id']|string + '.png') }}" class="center" style="max-width: 512px">
+        <img class="item-picture" src="{{ url_for('static', filename='images/' + item['item_id']|string + '.png') }}" class="center">
         <div class="details">
             <div class="item-name">{{ item['item_name'] }} </div>
             <div class="price"><p class="tag">Price:</p> ${{ item['item_price'] }}</div>

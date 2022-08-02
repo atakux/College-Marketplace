@@ -1,11 +1,7 @@
 {% extends "layout.html" %}
 {% block content %}
     <head><link rel="stylesheet" href="{{ url_for('static', filename='css/create_item.css') }}"></head>
-    <div class="menu">
-        <div class="dashboard">Dashboard</div>
-        <button class="button back" onclick="location.href='/home';">Back</button>
-        <button class="button create-item" onclick="location.href='/sell';">Create Item</button>
-    </div>
+    {% include "dashboard.html" %}
     <form method="POST" enctype="multipart/form-data">
         <div class="container">
             <div class="card">
@@ -17,21 +13,21 @@
                     <p>Files Supported: PNG, JPEG</p>
                     <div class="btn-wrapper">
                         <label for="photo">Upload Image</label>
-                        <input type="file" id="photo" for="photo" name="photo" accept=".png,.jpeg,.jpg" onchange='updateFile()'>
+                        <input type="file" id="photo" for="photo" name="photo" accept=".png,.jpeg,.jpg" onchange='updateFile()' required>
                     </div>
                     <p id="file_name"></p>
                 </div>
                 <label for="item name">Item Name</label>
                 <div>
-                    <input type="name" id="name" name="name" autocomplete="off" placeholder="Enter name">
+                    <input type="name" id="name" name="name" autocomplete="off" placeholder="Enter name" required>
                 </div>
-                <label for="item price">Price</label>
+                <label for="item price">Price ($)</label>
                 <div>
-                    <input type="text" id="price" name="price" autocomplete="off" placeholder="Enter price">
+                    <input type="number"  id="price" name="price" step='.01' autocomplete="off" placeholder="Enter price" required>
                 </div>
                 <label for="item description">Description</label>
                 <div>
-                    <textarea name="itemDesc" id="item description" placeholder="Item description"></textarea>
+                    <textarea name="itemDesc" id="item description" placeholder="Item description" required></textarea>
                 </div>
                 <div><button type="submit">Post</button></div>
             </div>

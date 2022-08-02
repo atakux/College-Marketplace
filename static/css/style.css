@@ -11,12 +11,12 @@
   font-family: "Poppins";
 }
 
-#display_image{
-    width: 375px;
-    height: 211px;
-    border: 1px solid black;
-    background-position: center;
-    background-size: cover;
+#display_image {
+  width: 375px;
+  height: 211px;
+  border: 1px solid black;
+  background-position: center;
+  background-size: cover;
 }
 
 html,
@@ -56,6 +56,61 @@ footer div {
   margin-top: 60px;
 }
 
+.dropdown {
+  position: relative;
+  display: inline-block;
+  width: 45px;
+  height: 45px;
+  margin-bottom: 14.5px;
+  background: no-repeat;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20width%3D%221em%22%20height%3D%221em%22%20preserveAspectRatio%3D%22xMidYMid%20meet%22%20viewBox%3D%220%200%2048%2048%22%3E%3Cg%20fill%3D%22currentColor%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M24%2042c9.941%200%2018-8.059%2018-18S33.941%206%2024%206S6%2014.059%206%2024s8.059%2018%2018%2018Zm0%202c11.046%200%2020-8.954%2020-20S35.046%204%2024%204S4%2012.954%204%2024s8.954%2020%2020%2020Z%22%20clip-rule%3D%22evenodd%22%2F%3E%3Cpath%20d%3D%22M12%2035.63c0-1.033.772-1.906%201.8-2.02c7.715-.854%2012.72-.777%2020.418.019a1.99%201.99%200%200%201%201.108%203.472c-9.085%207.919-14.277%207.81-22.686.008c-.41-.38-.64-.92-.64-1.478Z%22%2F%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M34.115%2034.623c-7.637-.79-12.57-.864-20.206-.019A1.028%201.028%200%200%200%2013%2035.631c0%20.286.119.557.32.745c4.168%203.866%207.326%205.613%2010.413%205.624c3.098.011%206.426-1.722%2010.936-5.652a.99.99%200%200%200-.554-1.724ZM13.69%2032.616c7.796-.863%2012.874-.785%2020.632.018a2.99%202.99%200%200%201%201.662%205.221c-4.575%203.988-8.385%206.16-12.257%206.145c-3.883-.014-7.525-2.223-11.766-6.158A3.018%203.018%200%200%201%2011%2035.63a3.028%203.028%200%200%201%202.69-3.015Z%22%20clip-rule%3D%22evenodd%22%2F%3E%3Cpath%20d%3D%22M32%2020a8%208%200%201%201-16%200a8%208%200%200%201%2016%200Z%22%2F%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M24%2026a6%206%200%201%200%200-12a6%206%200%200%200%200%2012Zm0%202a8%208%200%201%200%200-16a8%208%200%200%200%200%2016Z%22%20clip-rule%3D%22evenodd%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+  background-size: cover;
+  border-radius: 50%;
+}
+
+.dropdown-content {
+  visibility: hidden;
+  opacity: 0;
+  right: 0;
+  position: absolute;
+  padding: 12px 14px;
+  background-color: var(--alabaster);
+  border-radius: 8px;
+  border: 1.5px var(--silver) solid;
+  margin-top: 56px;
+  z-index: 1;
+  transition: 0.2s;
+}
+
+.dropdown-content:after {
+  content: "";
+  position: absolute;
+  margin-top: -67%;
+  left: 79%;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid var(--silver);
+}
+
+.dropdown:hover .dropdown-content {
+  visibility: visible;
+  opacity: 1;
+}
+
+.drop-btn {
+  display: inline-block;
+  color: var(--bastille);
+  font-size: 19px;
+  font-weight: 420;
+  cursor: pointer;
+}
+
+.drop-btn:hover {
+  color: var(--dodger-blue);
+}
+
 .title {
   color: var(--bastille);
   font-size: 36px;
@@ -67,47 +122,38 @@ footer div {
   border: 1px solid var(--silver);
   margin-bottom: 14.5px;
   border-radius: 20px;
-  padding: 5px 18px;
+  padding: 15px;
   height: 25px;
   width: 485px;
   font-size: 16px;
 }
 
 .search:focus {
-    outline: 1px solid var(--dodger-blue);
+  outline: 1px solid var(--dodger-blue);
 }
 
 .button {
-    background-color: var(--dodger-blue);
-    border-radius: 12px;
-    border: 0;
-    padding: 7px 20px;
-    font-size: 18px;
-    font-weight: 500;
-    color: var(--alabaster);
-    cursor: pointer;
-  }
-
-.button.back {
-    color: var(--dodger-blue);
+  background-color: var(--dodger-blue);
+  border-radius: 12px;
+  border: 0;
+  padding: 7px 20px;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--alabaster);
+  cursor: pointer;
 }
 
-.button.back:hover {
-    background-color: var(--dodger-blue);
-    color: var(--alabaster);
-}
-
-textarea {
-    padding: 10px;
-    max-width: 100%;
-    resize: none;
-    margin: 0 10px -150px;
-    text-align: justify;
+textarea .area {
+  padding: 10px;
+  max-width: 100%;
+  resize: none;
+  margin: 0 10px -150px;
+  text-align: justify;
 }
 
 textarea {
-    padding: 10px;
-    max-width: 100%;
+  padding: 10px;
+  max-width: 100%;
 
-    text-align: justify;
+  text-align: justify;
 }

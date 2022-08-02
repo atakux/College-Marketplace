@@ -7,26 +7,44 @@
     <link href="https://fonts.googleapis.com/css?family=Poppins&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://code.iconify.design/2/2.1.0/iconify.min.js"></script>
     <script type="text/javascript" src="static/js/index.js"></script>
     <title>College Marketplace</title>
 </head>
 
 <body>
     <div class="navbar">
-        <div class="title"><a href="/home">College Marketplace</a></div>
-        <input class="search" type="text" placeholder="Search">
+        <div class="title"><a href="/home"> <img class="hat-icon" src="{{ url_for('static', filename='images/icon-park-degree-hat@2x.svg') }}" /> <div style="float: right; margin-left: 16px; font-size: 32px;">College Marketplace</div> </a></div>
+        {% if search_query == None %}
+            <input class="search" id="searchBar" type="search" placeholder="Search" value="">
+        {% else %}
+            <input class="search" id="searchBar" type="search" placeholder="Search" value="{{ search_query }}">
+        {% endif %}
         {% if user_data == None %}
             <button class="button" onclick="location.href='/login';">Login/Signup</button>
         {% else %}
-            <div>
-                <button class="button" onclick="location.href='/sell';">Dashboard</button>
-                <button class="button" onclick="location.href='/sell';">List Item</button>
-                <button class="button" onclick="location.href='/logout';">Logout</button>
+            <div class="dropdown">
+                <!-- <img class="profile-icon" src="static/images/healthicons-ui-user-profile@2x.svg" /> -->
+                <div class="dropdown-content">
+                    <div class="drop-btn" onclick="location.href='/manage';">Dashboard</div>
+                    <div class="drop-btn" style="padding-bottom: 7px; padding-top: 7px;" onclick="location.href='/sell';">List Item</div>
+                    <div class="drop-btn" onclick="location.href='/logout';">Logout</div>
+                </div>
             </div>
         {% endif %}
     </div>
 
     {% block content %}{% endblock %}
+
+    <script>
+        searchBar = document.getElementById('searchBar');
+        searchBar.addEventListener("keyup", (e) => {
+            if (e.keyCode === 13) {
+                url = "/search/" + searchBar.value;
+                window.location.replace(url)
+            }
+        });
+    </script>
 
 <footer>
     <div>Copyright 2022 College Marketplace</div>

@@ -1,0 +1,95 @@
+.menu {
+  float: left;
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin-top: 100px;
+  margin-left: 130px;
+  max-width: fit-content;
+  align-items: baseline;
+}
+
+.dashboard {
+  display: flex;
+  font-size: 32px;
+  font-weight: 600;
+  margin-bottom: 40px;
+}
+
+.button.back,
+.button.create-item,
+.button.manage-item,
+.button.logout {
+  align-items: center;
+  background-color: var(--alabaster);
+  color: var(--bastille);
+  border-radius: 12px;
+  box-shadow: 3px 3px 10px #00000033;
+  display: flex;
+  height: 50px;
+  width: 242px;
+  padding: 5px 30px 5px 13px;
+  cursor: pointer;
+  border: none;
+  font-size: 19px;
+  font-weight: 550;
+  margin-top: 55px;
+  transition: 0.2s;
+}
+
+.button.back {
+  color: var(--dodger-blue);
+}
+
+.back-icon {
+  margin-right: 8px;
+  margin-bottom: 4px;
+}
+
+.folder-icon {
+  margin-top: 4px;
+  margin-right: 8px;
+  margin-bottom: 4px;
+}
+
+.plus-icon {
+  margin-right: 6px;
+  margin-bottom: 2px;
+  margin-left: -3px;
+  width: 27px;
+  height: 27px;
+}
+
+.logout-icon {
+  margin-top: 5px;
+  margin-right: 8px;
+  margin-bottom: 4px;
+}
+
+.button.back:hover {
+  background-color: var(--dodger-blue);
+  color: var(--alabaster);
+}
+
+.button:hover {
+  background-color: var(--dodger-blue);
+  color: var(--alabaster) !important;
+}
+
+.button.back:hover > .back-icon {
+  filter: brightness(1000%);
+}
+
+.button:hover > .folder-icon {
+  filter: brightness(1000%);
+}
+
+.button.logout:hover {
+  background-color: var(--alabaster) !important;
+  color: rgb(255, 47, 136) !important;
+}
+
+.button.logout:hover > .logout-icon {
+  filter: invert(30%) sepia(80%) saturate(2500%) hue-rotate(315deg);
+}
