@@ -131,8 +131,8 @@ def search(query=""):
     #Get item data
     results = None
     data = []
-    with sqlal_session_gen.begin() as sess:
-        results = sess.execute(text('SELECT * FROM item ORDER BY item_id DESC'))
+    with sqlal_session_gen.begin() as generated_session:
+        results = generated_session.execute(text('SELECT * FROM item ORDER BY item_id DESC'))
         for r in results:
             r_dict = dict(r)
 
@@ -161,8 +161,12 @@ def login(next_path=None):
                     for r in user_results:
                         user_data = dict(r)
                 if bcrypt.checkpw(bytes(password, encoding='utf8'), user_data['user_password']):
-                    session['user_id'] = user_data['user_id']
-                    print("successful login")
+                    if user_data['user_status'] == 2:
+                        redirect(url_for('login'))
+                        flash("You have been banned!", category="is-danger")
+                    else:
+                        session['user_id'] = user_data['user_id']
+                        print("successful login")
                     if 'next' in session:
                         url = session['next']
                         session.pop('next')
@@ -190,27 +194,19 @@ def logout():
 
 
 # for testing
-@app.route('/users')
-def get_users_data():
+@app.route('/<table_name>')
+def get_table_data(table_name: str):
     results = None
     data = []
-    with sqlal_session_gen.begin() as generated_session:
-        results = generated_session.execute(text('select * from user'))
-        for r in results:
-            data.append(dict(r))
-    return str(data)
+    try:
+        with sqlal_session_gen.begin() as generated_session:
+            results = generated_session.execute(text('select * from {}'.format(table_name)))
+            for r in results:
+                data.append(dict(r))
+        return str(data)
+    except:
+        return "invalid table name (probably)"
 
-
-# for testing
-@app.route('/reviews')
-def get_review_data():
-    results = None
-    data = []
-    with sqlal_session_gen.begin() as generated_session:
-        results = generated_session.execute(text('select * from review'))
-        for r in results:
-            data.append(dict(r))
-    return str(data)
 
 
 @app.route('/sign_up', methods=['POST', 'GET'])
@@ -362,7 +358,7 @@ def send_email(seller_id: str):
                 message_text = request.form.get('message', '')
 
                 sender_email = EMAIL_ADDRESS
-                sender_password = "toubticyusplqrnd"
+                sender_password = EMAIL_APP_PASSWORD
                 receiver_email = seller_data['user_email']
 
                 message = MIMEMultipart("alternative")
@@ -523,21 +519,24 @@ def manage():
     user_data = get_login_user_data()
     data = []
     if user_data is not None:
-        if user_data['user_status'] == 1:
-            #Get Data
-            with sqlal_session_gen.begin() as sess:
-                results = sess.execute(text('SELECT * FROM item WHERE seller_id={} ORDER BY item_id DESC'.format(user_data['user_id'])))
-                for r in results:
-                    r_dict = dict(r)
-                    data.append(r_dict)
+        #Get Data
+        with sqlal_session_gen.begin() as generated_session:
+            results = generated_session.execute(text('SELECT * FROM item WHERE seller_id={} ORDER BY item_id DESC'.format(user_data['user_id'])))
+            for r in results:
+                r_dict = dict(r)
+                data.append(r_dict)
 
-            #Post
-            if request.method == 'POST':
-                item_name = request.form.get('name')
-                price = request.form.get('price')
-                description = request.form.get('itemDesc')
-                status = request.form.get('status')
-                item_id = request.form.get('itemId')
+        #Post
+        if request.method == 'POST':
+            item_name = request.form.get('name')
+            price = request.form.get('price')
+            description = request.form.get('itemDesc')
+            status = request.form.get('status')
+            item_id = request.form.get('itemId')
+            
+            #Update
+            engine.execute(f"UPDATE item SET item_name='{item_name}', item_price={price}, item_description='{description}', active={status} WHERE item_id={item_id}")
+            return redirect(url_for('manage'))
 
                 #Update
                 engine.execute(f"UPDATE item SET item_name='{item_name}', item_price={price}, item_description='{description}', active={status} WHERE item_id={item_id}")
@@ -560,15 +559,25 @@ def view_all_messages():
     users_current_commed_with = []
     user_data = get_login_user_data()
     if user_data is not None:
-        if user_data['user_status'] == 1:
-            if request.method == 'GET':
-                with sqlal_session_gen.begin() as generated_session:
-                    users_current_sent_to_results = generated_session.execute(text("SELECT receiver_id AS important_id, "
-                        "max(message_id) AS message_num, message_content FROM (SELECT receiver_id, message_id, sender_id, message_content FROM message WHERE sender_id={}) z "
-                        " GROUP BY important_id "
-                        "ORDER BY message_id desc".format(user_data["user_id"])))
-                    for ucstr in users_current_sent_to_results:
-                        users_current_sent_to_data.append(dict(ucstr))
+        if request.method == 'GET':
+            with sqlal_session_gen.begin() as generated_session:
+                users_current_sent_to_results = generated_session.execute(text("SELECT receiver_id AS important_id, "
+                    "max(message_id) AS message_num, message_content, user_name FROM (SELECT receiver_id, message_id, sender_id,"
+                    " message_content, user_name FROM message JOIN user ON receiver_id=user_id WHERE sender_id={}) z "
+                    " GROUP BY important_id "
+                    "ORDER BY message_id desc".format(user_data["user_id"])))
+                for ucstr in users_current_sent_to_results:
+                    users_current_sent_to_data.append(dict(ucstr))
+
+            with sqlal_session_gen.begin() as generated_session:
+                users_current_got_from_results = generated_session.execute(text("SELECT sender_id AS important_id, "
+                    "max(message_id) AS message_num, message_content, user_name FROM (SELECT receiver_id, message_id, sender_id,"
+                    " message_content, user_name FROM message JOIN user ON sender_id=user_id WHERE receiver_id={}) z"
+                    " GROUP BY important_id "
+                    "ORDER BY message_id desc".format(user_data["user_id"])))
+                for ucgfr in users_current_got_from_results:
+                    users_current_got_from_data.append(dict(ucgfr))
+            
 
                 with sqlal_session_gen.begin() as generated_session:
                     users_current_got_from_results = generated_session.execute(text("SELECT sender_id AS important_id, "
@@ -628,6 +637,17 @@ def message(id: int):
             return redirect(url_for('home'))
     else:
         return redirect('/login')
+
+
+@app.route('/idontwantanyonetoaccidentallyban')
+def ban_current_user():
+    user_data = get_login_user_data()
+    if user_data is not None:
+        engine.execute("UPDATE user SET user_status=2 WHERE user_id={}".format(user_data['user_id']))
+        engine.execute("UPDATE item SET active=0 WHERE seller_id={}".format(user_data['user_id']))
+        return redirect(url_for('logout'))
+    return "your account has been banned"
+
 
 @app.route('/error')
 def display_error():
