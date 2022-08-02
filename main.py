@@ -34,7 +34,7 @@ if not inspector.has_table("user"):
         "`user_email` TEXT NOT NULL,"
         "`user_zip` TEXT NOT NULL,"
         "`user_password` TEXT NOT NULL,"
-        "`user_status` INTEGER NOT NULL DEFAULT 0"
+        "`user_status` INTEGER NOT NULL DEFAULT 1"
         ")")
 
 if not inspector.has_table("item"):
@@ -92,7 +92,6 @@ sqlal_session_gen = sessionmaker(engine)
 
 mail = Mail(app)
 s = URLSafeTimedSerializer('secretcode')
-locale.setlocale( locale.LC_ALL, '' )
 
 @app.route('/', methods=['POST', 'GET'])
 @app.route('/home', methods=['POST', 'GET'])
