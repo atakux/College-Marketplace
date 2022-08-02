@@ -6,7 +6,7 @@
         {% with messages = get_flashed_messages() %}
             {% if messages %}
                 <div class="notification is-danger">
-                    {{ messages[0] }}
+                    <p style='text-align: center'>{{ messages[0] }}</p>
                 </div>
             {% endif %}
         {% endwith %}
