@@ -116,7 +116,8 @@ def home():
             seller_data = get_user_data_by_id(r_dict['seller_id'])
             r_dict['seller_name'] = seller_data['user_name']
             r_dict['zip_code'] = seller_data['user_zip']
-            data.append(r_dict)
+            if seller_data['user_status'] == 1:
+                data.append(r_dict)
             
     return render_template('home.html', item_list=data, user_data=user_data, search_query=None)    
 
@@ -132,7 +133,7 @@ def search(query=""):
     results = None
     data = []
     with sqlal_session_gen.begin() as generated_session:
-        results = generated_session.execute(text('SELECT * FROM item ORDER BY item_id DESC'))
+        results = generated_session.execute(text('SELECT * FROM item WHERE active=1 ORDER BY item_id DESC'))
         for r in results:
             r_dict = dict(r)
 
@@ -141,7 +142,8 @@ def search(query=""):
                 seller_data = get_user_data_by_id(r_dict['seller_id'])
                 r_dict['seller_name'] = seller_data['user_name']
                 r_dict['zip_code'] = seller_data['user_zip']
-                data.append(r_dict)
+                if seller_data['user_status'] == 1:
+                    data.append(r_dict)
     
     return render_template('home.html', item_list=data, user_data=user_data, search_query=query)    
 
@@ -167,12 +169,12 @@ def login(next_path=None):
                     else:
                         session['user_id'] = user_data['user_id']
                         print("successful login")
-                    if 'next' in session:
-                        url = session['next']
-                        session.pop('next')
-                        return redirect(url)
-                    else:
-                        return redirect(url_for('home'))
+                        if 'next' in session:
+                            url = session['next']
+                            session.pop('next')
+                            return redirect(url)
+                        else:
+                            return redirect(url_for('home'))
                 else:
                     redirect(url_for('login'))
                     flash("The username and/or password is incorrect, please try again.", category="is-danger")
@@ -217,6 +219,8 @@ def sign_up():
     """
     user_data = get_login_user_data()
     if user_data is None:
+        if 'next' in session:
+            session.pop('next')
         if request.method == 'POST':
             user_name = request.form.get('userName', 'default value name')
             email = request.form.get('email', 'default value email')
@@ -272,6 +276,7 @@ def sign_up():
                 engine.execute("INSERT INTO user (user_name, user_email, user_zip, "
                                "user_password) VALUES (?, ?, ?, ?);",
                                (user_name, email, address, hashed_pass))
+                flash(f'Verification Email Sent to {email}')
                 return redirect(url_for('login'))
         return render_template('signup.html')
     else:
@@ -337,75 +342,6 @@ def user(seller_id: str):
     else:
         return render_template('error.html')
 
-
-@app.route('/send_email/<seller_id>', methods=['POST', 'GET'])
-def send_email(seller_id: str):
-    """Allows you send email to the user of associated id"""
-    user_data = get_login_user_data()
-    seller_data = {}
-    buyer_data = {}
-
-    if user_data is not None:
-        #Get Data
-        seller_data = get_user_data_by_id(seller_id)
-        buyer_data = get_user_data_by_id(user_data['user_id'])
-
-        if user_data['user_status'] == 1:
-            if request.method == 'POST':
-                # Send Email
-                # https://realpython.com/python-send-email/#option-1-setting-up-a-gmail-account-for-development
-                subject = request.form.get('subject', '')
-                message_text = request.form.get('message', '')
-
-                sender_email = EMAIL_ADDRESS
-                sender_password = EMAIL_APP_PASSWORD
-                receiver_email = seller_data['user_email']
-
-                message = MIMEMultipart("alternative")
-                message["Subject"] = f"CMP Message from {buyer_data['user_name']} - {subject}"
-                message["From"] = sender_email
-                message["To"] = receiver_email
-
-                # Create the plain-text and HTML version of your message
-                text = message_text
-                html = """\
-                <html>
-                <body>
-                    <p>{}</p>
-                    <br>
-                    <p>To reply, please click this link: <a href="" target="_blank_"></a></p>
-                </body>
-                </html>
-                """.format(message_text.replace('\n', "<br>"))
-                print(text)
-                print(html)
-
-                # Turn these into plain/html MIMEText objects
-                part1 = MIMEText(text, "plain")
-                part2 = MIMEText(html, "html")
-
-                # Add HTML/plain-text parts to MIMEMultipart message
-                # The email client will try to render the last part first
-                message.attach(part1)
-                message.attach(part2)
-
-                # Create secure connection with server and send email
-                context = ssl.create_default_context()
-                with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
-                    server.login(sender_email, sender_password)
-                    server.sendmail(
-                        sender_email, receiver_email, message.as_string()
-                    )
-                return redirect(url_for('home'))
-            else:
-                return render_template('send_email.html', seller_data=seller_data, buyer_data=buyer_data)
-        elif user_data['user_status'] == 0:
-            flash('You must verify your email to do this action')
-            return redirect(url_for('home'))
-    else:
-        return redirect(url_for('login'))
-
-
 @app.route('/send_report/<int:id>')
 def send_report(id: int):
     user_data = get_login_user_data()
@@ -429,7 +365,8 @@ def send_report(id: int):
 
             # Finally, don't forget to close the connection
             smtp.quit()
-            return "report sent!!"
+            flash("Report Sent!")
+            return redirect(url_for('home'))
         elif user_data['user_status'] == 0:
             flash("You must verify your email to do this action")
             return redirect(url_for('home'))
@@ -504,7 +441,7 @@ def sell_item():
                 filename = '{}.png'.format(id_num)
 
                 photo.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                return redirect(url_for('home'))
+                return redirect(url_for('get_item', id=id_num))
             return render_template('post_item.html')
         elif user_data['user_status'] == 0:
             flash('You must verify your email to do this action')
@@ -541,65 +478,6 @@ def manage():
     else:
         session['next'] = url_for('manage')
         return redirect(url_for('login'))
-
-"""
-@app.route('/chat', methods=['POST', 'GET'])
-def view_all_messages():
-    msg_data = {}
-    users_current_sent_to_data = []
-    users_current_got_from_data = []
-    users_current_commed_with = []
-    user_data = get_login_user_data()
-    if user_data is not None:
-        if request.method == 'GET':
-            with sqlal_session_gen.begin() as generated_session:
-                users_current_sent_to_results = generated_session.execute(text("SELECT receiver_id AS important_id, "
-                    "max(message_id) AS message_num, message_content, user_name FROM (SELECT receiver_id, message_id, sender_id,"
-                    " message_content, user_name FROM message JOIN user ON receiver_id=user_id WHERE sender_id={}) z "
-                    " GROUP BY important_id "
-                    "ORDER BY message_id desc".format(user_data["user_id"])))
-                for ucstr in users_current_sent_to_results:
-                    users_current_sent_to_data.append(dict(ucstr))
-
-            with sqlal_session_gen.begin() as generated_session:
-                users_current_got_from_results = generated_session.execute(text("SELECT sender_id AS important_id, "
-                    "max(message_id) AS message_num, message_content, user_name FROM (SELECT receiver_id, message_id, sender_id,"
-                    " message_content, user_name FROM message JOIN user ON sender_id=user_id WHERE receiver_id={}) z"
-                    " GROUP BY important_id "
-                    "ORDER BY message_id desc".format(user_data["user_id"])))
-                for ucgfr in users_current_got_from_results:
-                    users_current_got_from_data.append(dict(ucgfr))
-            
-
-                with sqlal_session_gen.begin() as generated_session:
-                    users_current_got_from_results = generated_session.execute(text("SELECT sender_id AS important_id, "
-                        "max(message_id) AS message_num, message_content FROM (SELECT receiver_id, message_id, sender_id, message_content FROM message WHERE receiver_id={}) z"
-                        " GROUP BY important_id "
-                        "ORDER BY message_id desc".format(user_data["user_id"])))
-                    for ucgfr in users_current_got_from_results:
-                        users_current_got_from_data.append(dict(ucgfr))
-
-                users_current_commed_with.extend(users_current_sent_to_data)
-                users_current_commed_with.extend(users_current_got_from_data)
-                data = sorted(users_current_commed_with, key=lambda x:x['message_num'], reverse=True)
-                data_dict = {}
-                dupe_indices = []
-                for index in range(len(data)):
-                    if data[index]['important_id'] in data_dict.keys():
-                        dupe_indices.append(index)
-                    else:
-                        data_dict[data[index]['important_id']] = data[index]['message_num']
-                dupe_list = reversed(dupe_indices)
-                for dupe in dupe_list:
-                    data.pop(dupe)
-            return render_template('message.html', users_list=data)
-        elif user_data['user_status'] == 0:
-            flash('You must verify your email to do this action')
-            return redirect(url_for('home'))
-    else:
-        return redirect('/login')
-"""
-
 
 @app.route('/chat', methods=['POST', 'GET'])
 @app.route('/chat/', methods=['POST', 'GET'])
@@ -679,14 +557,15 @@ def message(id: int=0):
         return redirect('/login')
 
 
-@app.route('/idontwantanyonetoaccidentallyban')
-def ban_current_user():
-    user_data = get_login_user_data()
-    if user_data is not None:
-        engine.execute("UPDATE user SET user_status=2 WHERE user_id={}".format(user_data['user_id']))
-        engine.execute("UPDATE item SET active=0 WHERE seller_id={}".format(user_data['user_id']))
+@app.route('/ban/<user>/<code>')
+def ban_current_user(user,code):
+    if code == "ZhjnkBnkZEJyjdfy":
+        engine.execute("UPDATE user SET user_status=2 WHERE user_id={}".format(user))
+        #engine.execute("UPDATE item SET active=0 WHERE seller_id={}".format(user)
         return redirect(url_for('logout'))
-    return "your account has been banned"
+    else:
+        print(code)
+        return redirect(url_for('display_error'))
 
 
 @app.route('/error')
@@ -698,6 +577,9 @@ def get_login_user_data():
     """Checks to see if user is logged in. If so, returns true. If not, returns false"""
     try:
         user_data = get_user_data_by_id(session['user_id'])
+        #Check for ban
+        if user_data['user_status'] == 2:
+            return redirect(url_for('logout'))
         return user_data
     except:
         return None
