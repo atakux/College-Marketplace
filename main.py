@@ -357,7 +357,7 @@ def send_email(seller_id: str):
                 message_text = request.form.get('message', '')
 
                 sender_email = EMAIL_ADDRESS
-                sender_password = "toubticyusplqrnd"
+                sender_password = EMAIL_APP_PASSWORD
                 receiver_email = seller_data['user_email']
 
                 message = MIMEMultipart("alternative")
