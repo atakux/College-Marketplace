@@ -554,7 +554,7 @@ def manage():
 
 @app.route('/user_profile/<int:id>', methods=['POST', 'GET'])
 def user_profile(id: int):
-    reviews_list = []
+    review_list = []
     users = []
     user_data = get_login_user_data()
 
@@ -569,9 +569,9 @@ def user_profile(id: int):
             seller_items = get_item_by_uid(id)
 
             for review in review_results:
-                reviews_list.append(dict(review))
+                review_list.append(dict(review))
 
-            for review_dict in reviews_list:
+            for review_dict in review_list:
                 for key, val in review_dict.items():
                     if key == 'user_id':
                         print(val)
@@ -579,9 +579,9 @@ def user_profile(id: int):
 
             usernames = [item for unames in users for item in unames]
             print(usernames)
-            print(reviews_list)
+            print(review_list)
 
-        return render_template('user_profile.html', items=seller_items, reviews=reviews_list, seller_data=seller_data, user_ids=usernames, data=user_data)
+        return render_template('user.html', item_list=seller_items, review_list=review_list, seller_data=seller_data, user_ids=usernames, user_data=user_data)
 
 
 @app.route('/personal_profile')
