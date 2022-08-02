@@ -1,6 +1,7 @@
-img {
-    min-height: 440px;
-    min-width: 440px;
+.item-picture {
+    min-width: 512px;
+    max-width: 612px;
+    max-height: 612px;
 }
 
 h1 {
