@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block content %}
+<form method="POST">
+    <br>
+    <br>
+    <br>
+    <br>
+    <label for="message content">Message Content</label>
+        <div>
+            <textarea name="messageContent" id="message content" placeholder="Send a message to {{ receiver['user_name'] }}..."></textarea>
+        </div>
+         <div class="input-field button">
+            <br>
+            <br>
+            <br>
+            <br>
+            <button class="input-field button" type="submit" id="btn">Send</button>
+         </div>
+</form>
+    <br>
+    <br>
+    <br>
+    <br>
+    {% for message in message_list %}
+        {% if message['sender_id'] == sender['user_id'] %}
+            <h1> You said:</h1>
+            <p> {{message['message_content']}}</p>
+        {% else %}
+            <h1> {{receiver['user_name']}} said: </h1>
+            <p> {{message['message_content']}} </p>
+        {% endif %}
+    {% endfor %}
+{% endblock content %}
