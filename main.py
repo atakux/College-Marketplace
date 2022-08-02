@@ -34,7 +34,7 @@ if not inspector.has_table("user"):
         "`user_email` TEXT NOT NULL,"
         "`user_zip` TEXT NOT NULL,"
         "`user_password` TEXT NOT NULL,"
-        "`user_status` INTEGER NOT NULL DEFAULT 1"
+        "`user_status` INTEGER NOT NULL DEFAULT 0"
         ")")
 
 if not inspector.has_table("item"):
@@ -93,6 +93,7 @@ sqlal_session_gen = sessionmaker(engine)
 mail = Mail(app)
 s = URLSafeTimedSerializer('secretcode')
 
+
 @app.route('/', methods=['POST', 'GET'])
 @app.route('/home', methods=['POST', 'GET'])
 def home():
@@ -119,6 +120,7 @@ def home():
             
     return render_template('home.html', item_list=data, user_data=user_data, search_query=None)    
 
+
 @app.route('/search')
 @app.route('/search/')
 @app.route('/search/<query>')
@@ -143,6 +145,7 @@ def search(query=""):
     
     return render_template('home.html', item_list=data, user_data=user_data, search_query=query)    
 
+
 @app.route('/login', methods=['POST', 'GET'])
 def login(next_path=None):
     user_data = get_login_user_data()
@@ -158,8 +161,12 @@ def login(next_path=None):
                     for r in user_results:
                         user_data = dict(r)
                 if bcrypt.checkpw(bytes(password, encoding='utf8'), user_data['user_password']):
-                    session['user_id'] = user_data['user_id']
-                    print("successful login")
+                    if user_data['user_status'] == 2:
+                        redirect(url_for('login'))
+                        flash("You have been banned!", category="is-danger")
+                    else:
+                        session['user_id'] = user_data['user_id']
+                        print("successful login")
                     if 'next' in session:
                         url = session['next']
                         session.pop('next')
@@ -187,27 +194,19 @@ def logout():
 
 
 # for testing
-@app.route('/users')
-def get_users_data():
+@app.route('/<table_name>')
+def get_table_data(table_name: str):
     results = None
     data = []
-    with sqlal_session_gen.begin() as generated_session:
-        results = generated_session.execute(text('select * from user'))
-        for r in results:
-            data.append(dict(r))
-    return str(data)
+    try:
+        with sqlal_session_gen.begin() as generated_session:
+            results = generated_session.execute(text('select * from {}'.format(table_name)))
+            for r in results:
+                data.append(dict(r))
+        return str(data)
+    except:
+        return "invalid table name (probably)"
 
-
-# for testing
-@app.route('/reviews')
-def get_review_data():
-    results = None
-    data = []
-    with sqlal_session_gen.begin() as generated_session:
-        results = generated_session.execute(text('select * from review'))
-        for r in results:
-            data.append(dict(r))
-    return str(data)
 
 
 @app.route('/sign_up', methods=['POST', 'GET'])
@@ -278,6 +277,7 @@ def sign_up():
     else:
         return redirect(url_for('home'))
 
+
 @app.route('/confirm_email/<token>', methods=['POST', 'GET'])
 def confirm_email(token):
     try:
@@ -291,6 +291,7 @@ def confirm_email(token):
         display_error()
     finally:
         return redirect(url_for('login'))
+
 
 @app.route('/item/<int:id>')
 def get_item(id: int):
@@ -512,6 +513,7 @@ def sell_item():
         session['next'] = url_for('sell_item')
         return redirect(url_for('login'))
 
+
 @app.route('/manage', methods=['POST', 'GET'])
 def manage():
     user_data = get_login_user_data()
@@ -535,8 +537,6 @@ def manage():
             #Update
             engine.execute(f"UPDATE item SET item_name='{item_name}', item_price={price}, item_description='{description}', active={status} WHERE item_id={item_id}")
             return redirect(url_for('manage'))
-
-        return render_template('manage_item.html', item_list=data)
     else:
         session['next'] = url_for('manage')
         return redirect(url_for('login'))
@@ -570,23 +570,35 @@ def view_all_messages():
                     users_current_got_from_data.append(dict(ucgfr))
             
 
-            users_current_commed_with.extend(users_current_sent_to_data)
-            users_current_commed_with.extend(users_current_got_from_data)
-            data = sorted(users_current_commed_with, key=lambda x:x['message_num'], reverse=True)
-            data_dict = {}
-            dupe_indices = []
-            for index in range(len(data)):
-                if data[index]['important_id'] in data_dict.keys():
-                    dupe_indices.append(index)
-                else:
-                    data_dict[data[index]['important_id']] = data[index]['message_num']
-            dupe_list = reversed(dupe_indices)
-            for dupe in dupe_list:
-                data.pop(dupe)
-        return render_template('message.html', users_list=data)
+                with sqlal_session_gen.begin() as generated_session:
+                    users_current_got_from_results = generated_session.execute(text("SELECT sender_id AS important_id, "
+                        "max(message_id) AS message_num, message_content FROM (SELECT receiver_id, message_id, sender_id, message_content FROM message WHERE receiver_id={}) z"
+                        " GROUP BY important_id "
+                        "ORDER BY message_id desc".format(user_data["user_id"])))
+                    for ucgfr in users_current_got_from_results:
+                        users_current_got_from_data.append(dict(ucgfr))
+
+                users_current_commed_with.extend(users_current_sent_to_data)
+                users_current_commed_with.extend(users_current_got_from_data)
+                data = sorted(users_current_commed_with, key=lambda x:x['message_num'], reverse=True)
+                data_dict = {}
+                dupe_indices = []
+                for index in range(len(data)):
+                    if data[index]['important_id'] in data_dict.keys():
+                        dupe_indices.append(index)
+                    else:
+                        data_dict[data[index]['important_id']] = data[index]['message_num']
+                dupe_list = reversed(dupe_indices)
+                for dupe in dupe_list:
+                    data.pop(dupe)
+            return render_template('message.html', users_list=data)
+        elif user_data['user_status'] == 0:
+            flash('You must verify your email to do this action')
+            return redirect(url_for('home'))
     else:
         return redirect('/login')
 """
+
 
 @app.route('/chat', methods=['POST', 'GET'])
 @app.route('/chat/', methods=['POST', 'GET'])
@@ -664,6 +676,17 @@ def message(id: int=0):
         return render_template('message.html', sender=user_data, receiver=other_user_data, message_list=list_of_messages, users_list=data)
     else:
         return redirect('/login')
+
+
+@app.route('/idontwantanyonetoaccidentallyban')
+def ban_current_user():
+    user_data = get_login_user_data()
+    if user_data is not None:
+        engine.execute("UPDATE user SET user_status=2 WHERE user_id={}".format(user_data['user_id']))
+        engine.execute("UPDATE item SET active=0 WHERE seller_id={}".format(user_data['user_id']))
+        return redirect(url_for('logout'))
+    return "your account has been banned"
+
 
 @app.route('/error')
 def display_error():

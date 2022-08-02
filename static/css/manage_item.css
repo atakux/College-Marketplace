@@ -3,6 +3,18 @@
     color: var(--alabaster) !important;
 }
 
+.folder-icon {
+  filter: brightness(1000%) !important;
+}
+
+.plus-icon {
+  filter: invert(1);
+}
+
+.button.create-item:hover > .plus-icon {
+  filter: brightness(1000%);
+}
+
 .item-list {
   display: flex;
   flex-wrap: wrap;
