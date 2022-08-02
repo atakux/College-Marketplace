@@ -555,7 +555,7 @@ def manage():
 @app.route('/user_profile/<int:id>', methods=['POST', 'GET'])
 def user_profile(id: int):
     reviews_list = []
-    reviews = {}
+    users = []
     user_data = get_login_user_data()
 
     if user_data['user_id'] == id:
@@ -564,16 +564,24 @@ def user_profile(id: int):
         with sqlal_session_gen.begin() as sess:
 
             review_results = sess.execute(text("SELECT * FROM review "
-                                               "WHERE user_id={}".format(id)))
+                                               "WHERE seller_id={}".format(id)))
+            seller_data = get_user_data_by_id(id)
+            seller_items = get_item_by_uid(id)
+
             for review in review_results:
-                reviews = dict(review)
-            for key, val in reviews.items():
-                reviews_list.append(val)
+                reviews_list.append(dict(review))
 
+            for review_dict in reviews_list:
+                for key, val in review_dict.items():
+                    if key == 'user_id':
+                        print(val)
+                        users.append(get_user_name_by_id(val))
+
+            usernames = [item for unames in users for item in unames]
+            print(usernames)
             print(reviews_list)
-            print(reviews)
 
-        return render_template('user_profile.html', reviews=reviews_list)
+        return render_template('user_profile.html', items=seller_items, reviews=reviews_list, seller_data=seller_data, user_ids=usernames, data=user_data)
 
 
 @app.route('/personal_profile')
@@ -683,6 +691,27 @@ def get_user_data_by_id(id):
         user_results = generated_session.execute(text('select * from user where user_id={}'.format(id)))
         for ur in user_results:
             return ur
+
+
+def get_user_name_by_id(id):
+    usernames = []
+    with sqlal_session_gen.begin() as generated_session:
+        user_results = generated_session.execute(text('select user_name from user where user_id={}'.format(id)))
+        for ur in user_results:
+            usernames.append(str(ur).strip("(),'"))
+            return usernames
+
+
+def get_item_by_uid(id):
+    user_data = get_user_data_by_id(id)
+    item_data = {}
+    if user_data is not None:
+        with sqlal_session_gen.begin() as generated_session:
+            item_results = generated_session.execute(text('select * from item where item_id={}'.format(id)))
+            for ir in item_results:
+                item_data = dict(ir)
+
+    return item_data
 
 
 if __name__ == '__main__':
