@@ -129,8 +129,8 @@ def search(query=""):
     #Get item data
     results = None
     data = []
-    with Session.begin() as sess:
-        results = sess.execute(text('SELECT * FROM item ORDER BY item_id DESC'))
+    with sqlal_session_gen.begin() as generated_session:
+        results = generated_session.execute(text('SELECT * FROM item ORDER BY item_id DESC'))
         for r in results:
             r_dict = dict(r)
 
@@ -518,8 +518,8 @@ def manage():
     data = []
     if user_data is not None:
         #Get Data
-        with Session.begin() as sess:
-            results = sess.execute(text('SELECT * FROM item WHERE seller_id={} ORDER BY item_id DESC'.format(user_data['user_id'])))
+        with sqlal_session_gen.begin() as generated_session:
+            results = generated_session.execute(text('SELECT * FROM item WHERE seller_id={} ORDER BY item_id DESC'.format(user_data['user_id'])))
             for r in results:
                 r_dict = dict(r)
                 data.append(r_dict)
