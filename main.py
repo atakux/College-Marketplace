@@ -16,6 +16,7 @@ from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
+import locale
 
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
 
@@ -92,7 +93,7 @@ Session = sessionmaker(engine)
 
 mail = Mail(app)
 s = URLSafeTimedSerializer('secretcode')
-
+locale.setlocale( locale.LC_ALL, '' )
 
 @app.route('/', methods=['POST', 'GET'])
 @app.route('/home', methods=['POST', 'GET'])
@@ -120,8 +121,10 @@ def home():
             
     return render_template('home.html', item_list=data, user_data=user_data, search_query=None)    
 
+@app.route('/search')
+@app.route('/search/')
 @app.route('/search/<query>')
-def search(query:str):
+def search(query=""):
     #Get User Data if Logged in
     user_data = get_login_user_data()
 
@@ -476,11 +479,12 @@ def sell_item():
                 # Get Data
                 item_name = request.form.get('name', 'default item name')
                 price = request.form.get('price', 'default price')
+                correct_price = "{:.2f}".format(float(price))
                 description = request.form.get('itemDesc', 'default description')
 
                 # Commit to Databse
                 engine.execute("INSERT INTO item (item_name, item_price, item_description, seller_id, active) "
-                               "VALUES (?, ?, ?, ?, ?);", (item_name, price, description, user_data['user_id'], 1))
+                               "VALUES (?, ?, ?, ?, ?);", (item_name, correct_price, description, user_data['user_id'], 1))
 
                 id_num = 0
                 try:
@@ -498,6 +502,7 @@ def sell_item():
                 print(id_num)
 
                 photo = request.files['photo']
+                print(photo)
                 filename = '{}.png'.format(id_num)
 
                 photo.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))

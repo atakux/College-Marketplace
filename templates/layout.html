@@ -14,8 +14,12 @@
 
 <body>
     <div class="navbar">
-        <div class="title"><a href="/home"> <img class="hat-icon" src="static/images/icon-park-degree-hat@2x.svg" /> <div style="float: right; margin-left: 16px; font-size: 32px;">College Marketplace</div> </a></div>
-        <input class="search" id="searchBar" type="search" placeholder="Search">
+        <div class="title"><a href="/home"> <img class="hat-icon" src="{{ url_for('static', filename='images/icon-park-degree-hat@2x.svg') }}" /> <div style="float: right; margin-left: 16px; font-size: 32px;">College Marketplace</div> </a></div>
+        {% if search_query == None %}
+            <input class="search" id="searchBar" type="search" placeholder="Search" value="">
+        {% else %}
+            <input class="search" id="searchBar" type="search" placeholder="Search" value="{{ search_query }}">
+        {% endif %}
         {% if user_data == None %}
             <button class="button" onclick="location.href='/login';">Login/Signup</button>
         {% else %}
