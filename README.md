@@ -9,14 +9,18 @@ cd final_proj
 pip install -r requirements.txt
 ```
 
-To get Google Maps API Key working:
+## Google Maps API
+
+Requires access to a Google Maps API key
 ```
 cd final_proj
 export API_KEY="API_KEY_VALUE"
 ```
 * Replace API_KEY_VALUE, with your own key.
 
-To get the email password working:
+## Gmail
+
+Requires access to a gmail account with 2-Factor Authentication.
 ```
 cd final_proj
 export EMAIL_APP_PASSWORD="EMAIL_APP_PASSWORD_VALUE"
