@@ -1,11 +1,80 @@
-{% extends "layout.html" %}
-{% block content %}
+{% extends "layout.html" %} {% block content %}
 
-<h1> {{ seller['user_name'] }} </h1>
-<div style="margin-left: 40vh; margin-top: 50px;">
-    <button type="submit" id="review-btn"><a href="/review/{{ seller['user_id'] }}">Review</a></button>
-    <button type="submit" id="msg-btn"><a href="/chat/{{ seller['user_id'] }}">Message</a></button>
-    <button type="submit" id="report-btn"><a href="/send_report/{{ seller['user_id'] }}">Report Seller</a></button>
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/item.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user.css') }}">
+</head>
+<div class="background">
+    <div class="welcome">{{ seller_data['user_name'].capitalize() }}'s Profile </div>
+    <button class="button" type="submit" id="btn">
+        <a href="/chat/{{ seller_data['user_id'] }}">Message User</a></button>
+    <button class="button" type="submit" id="btn" style="margin-top: 20px; margin-left: 15px;">
+        <a href="/send_report/{{ seller_data['user_id'] }}">Report User</a></button>
 </div>
+<div style="margin-left: 40vh;">
+    {% if user_data['user_id'] != seller_data['user_id'] %}
+    <div class="header" style="margin-top: 100px;">Post a Review</div>
+    <form method="POST" enctype="multipart/form-data">
+        <div>
+            <div>
+                <div style="margin-bottom: 5px;" for="score">Score (out of 10 - no decimals)</div>
+                <input style="margin-top: 5px; border: 1.5px solid var(--silver); border-radius: 5px;" type="number"
+                    id="score" name="score" autocomplete="off">
+                <div></div>
+                <div style="margin-top: 17px;" for="reviewContent">Review Content</div>
+                <textarea
+                    style="width: 360px; height: 50px; margin-top: 5px; border: 1.5px solid var(--silver); border-radius: 5px; resize: none;"
+                    name="reviewContent" id="reviewContent"></textarea>
+                <div style="margin-bottom: 60px;"><button class="button" style="margin-top: 5px; font-size: 14px;"
+                        type="submit">Post</button></div>
+            </div>
+        </div>
+    </form>
+    <div class="header"> User Reviews </div>
+    {% for review in review_list %}
 
+    <div>
+        <div style="font-size: 18px; font-weight: 500;"> <a
+                href="/user/{{ review['user_id'] }}">{{review['user_name']}}</a> gave this user a
+            {{review['review_score']}}/10</div>
+        <div style="margin-bottom: 15px;"> {{review['review_text']}} </div>
+    </div>
+
+    {% endfor %}
+    <div class="header" style="margin-top: 50px;"> Items this User has Listed </div>
+    {% if item_list|length < 1 %} <div style="text-align:center;">
+        <h2>No Listed Items</h2>
+</div>
+{% else %}
+<div class="item-container">
+{% for item in item_list %}
+{% if item['active'] == 1 %}
+    <div class="item reveal" style="margin-top: 10px; min-height: 350px;">
+        <a href="/item/{{ item['item_id'] }}"><img
+                src="{{ url_for('static', filename='images/' + item['item_id']|string + '.png') }}" class="center"
+                style="max-width: 320px; max-height: 180px;"></a>
+        <div class="item-name"><a href="/item/{{ item['item_id'] }}">{{ item['item_name'] }}</a></div>
+        <div class="price">
+            <div>
+                <p class="tag">Price: </p>${{ item['item_price'] }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+{% endif %}
+{% else %}
+    <br> 
+    <br>
+    <h2>See what other users have to say about you!</h2>
+    {% for review in review_list %}
+            <div>
+            <h3> <a href="/user/{{ review['user_id'] }}">{{review['user_name']}}</a> gave this user a {{review['review_score']}}/10</h3>
+            <p> {{review['review_text']}} </p>
+            </div>
+    {% endfor %}
+{% endif %}
 {% endblock content %}

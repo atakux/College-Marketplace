@@ -1,0 +1,14 @@
+.header {
+  font-size: 30px;
+  color: var(--bastille);
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.item-container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    max-width: 64vw;
+  }
