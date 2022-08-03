@@ -1,82 +1,75 @@
 {% extends "layout.html" %} {% block content %}
+
 <head>
-<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/item.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/item.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user.css') }}">
 </head>
-<h1> {{ seller_data['user_name'].capitalize() }}'s Profile </h1>
-{% if user_data['user_id'] != seller_data['user_id'] %}
-<div>
-    <br>
-    <button style="font-size: 22px;" class="button" type="submit" id="btn">
+<div class="background">
+    <div class="welcome">{{ seller_data['user_name'].capitalize() }}'s Profile </div>
+    <button class="button" type="submit" id="btn">
         <a href="/chat/{{ seller_data['user_id'] }}">Message User</a></button>
-    <button style="font-size: 22px;" class="button" type="submit" id="btn">
+    <button class="button" type="submit" id="btn" style="margin-top: 20px; margin-left: 15px;">
         <a href="/send_report/{{ seller_data['user_id'] }}">Report User</a></button>
-    <br>
 </div>
-<div>
-    <h2> Post a Review Here! </h2>
+<div style="margin-left: 40vh;">
+    {% if user_data['user_id'] != seller_data['user_id'] %}
+    <div class="header" style="margin-top: 100px;">Post a Review</div>
     <form method="POST" enctype="multipart/form-data">
-        <div class="container">
-            <div class="card">
-                <label for="score">Score (out of 10. no decimals)</label>
-                <div>
-                    <input type="number" id="score" name="score" autocomplete="off">
-                </div>
-                <label for="reviewContent">Review Content</label>
-                <div>
-                    <textarea name="reviewContent" id="reviewContent"></textarea>
-                </div>
-                <div><button type="submit">Post</button></div>
+        <div>
+            <div>
+                <div style="margin-bottom: 5px;" for="score">Score (out of 10 - no decimals)</div>
+                <input style="margin-top: 5px; border: 1.5px solid var(--silver); border-radius: 5px;" type="number"
+                    id="score" name="score" autocomplete="off">
+                <div></div>
+                <div style="margin-top: 17px;" for="reviewContent">Review Content</div>
+                <textarea
+                    style="width: 360px; height: 50px; margin-top: 5px; border: 1.5px solid var(--silver); border-radius: 5px; resize: none;"
+                    name="reviewContent" id="reviewContent"></textarea>
+                <div style="margin-bottom: 60px;"><button class="button" style="margin-top: 5px; font-size: 14px;"
+                        type="submit">Post</button></div>
             </div>
         </div>
     </form>
-    <h2> Other User Reviews </h2>
+    <div class="header"> User Reviews </div>
     {% for review in review_list %}
 
-            <div>
-            <h3> <a href="/user/{{ review['user_id'] }}">{{review['user_name']}}</a> gave this user a {{review['review_score']}}/10</h3>
-            <p> {{review['review_text']}} </p>
-            </div>
+    <div>
+        <div style="font-size: 18px; font-weight: 500;"> <a
+                href="/user/{{ review['user_id'] }}">{{review['user_name']}}</a> gave this user a
+            {{review['review_score']}}/10</div>
+        <div style="margin-bottom: 15px;"> {{review['review_text']}} </div>
+    </div>
 
     {% endfor %}
-    <h2> Items this User has Listed </h2>
-        {% if item_list|length < 1 %}
-            <br>
-            <div style="text-align:center;">
-                <h1>No Listed Items</h1>
-            </div>
-            <br>
-            <br>
-            <br>
-            <br>
-            <br>
-            <br>
-            <br>
-            <br>
-            <br>
-            <br>
-            <br>
-            <br>
-            <br>
-            <br>
-            <br>
-            <br>
-        {% else %}
-            {% for item in item_list %}
-                {% if item['active'] == 1 %}
-                    <a href="/item/{{ item['item_id'] }}"><img src="{{ url_for('static', filename='images/' + item['item_id']|string + '.png') }}" class="center" style="max-width: 320px; max-height: 180px;"></a>
-                        <div class="item-name"><a href="/item/{{ item['item_id'] }}">{{ item['item_name'] }}</a></div>
-                        <div class="price">
-                            <div>
-                                <p class="tag">Price: </p>${{ item['item_price'] }}
-                            </div>
-
-                        </div>
-                {% endif %}
-            {% endfor %}
-        {% endif %}
+    <div class="header" style="margin-top: 50px;"> Items this User has Listed </div>
+    {% if item_list|length < 1 %} <div style="text-align:center;">
+        <h2>No Listed Items</h2>
+</div>
 {% else %}
-    <p> It's you! </p>
-    <p> Despite everything, it's still you...</p>
+<div class="item-container">
+{% for item in item_list %}
+{% if item['active'] == 1 %}
+    <div class="item reveal" style="margin-top: 10px; min-height: 350px;">
+        <a href="/item/{{ item['item_id'] }}"><img
+                src="{{ url_for('static', filename='images/' + item['item_id']|string + '.png') }}" class="center"
+                style="max-width: 320px; max-height: 180px;"></a>
+        <div class="item-name"><a href="/item/{{ item['item_id'] }}">{{ item['item_name'] }}</a></div>
+        <div class="price">
+            <div>
+                <p class="tag">Price: </p>${{ item['item_price'] }}
+            </div>
+        </div>
+    </div>
+</div>
 {% endif %}
+{% endfor %}
+{% endif %}
+{% else %}
+<p> It's you! </p>
+<p> Despite everything, it's still you...</p>
+{% endif %}
+</div>
+
 {% endblock content %}
