@@ -1,0 +1,112 @@
+.menu {
+  float: left;
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin-top: 100px;
+  margin-left: 130px;
+  max-width: fit-content;
+  align-items: baseline;
+}
+
+.dashboard {
+  display: flex;
+  font-size: 32px;
+  font-weight: 600;
+  margin-bottom: 40px;
+}
+
+.button {
+  align-items: center;
+  background-color: var(--alabaster);
+  color: var(--bastille);
+  border-radius: 12px;
+  box-shadow: 3px 3px 10px #00000033;
+  display: block;
+  min-height: 120px;
+  width: 300px;
+  padding: 0px 23px;
+  cursor: pointer;
+  border: none;
+  font-size: 19px;
+  font-weight: 550;
+  margin-top: 10px;
+  transition: 0.2s;
+  text-align: left;
+}
+
+.container {
+    padding-top: 105px;
+    padding-left: 460px;
+    float: inherit;
+    display: flex;
+    max-width: 45vh;
+}
+
+.menu h2, p{
+    margin: 0px 0px 5px 0px;
+}
+
+.messages {
+    flex-grow: 1;
+    border: 1px solid var(--silver);
+    border-radius: 12px;
+    padding: 28px 30px;
+}
+
+.sent {
+  display: inline-block;
+  margin-top: 7px;
+  margin-left: auto;
+  width: fit-content;
+  max-width: 425px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  color: var(--alabaster);
+  background-color: var(--dodger-blue);
+}
+
+.received {
+  float: left;
+  margin-top: 7px;
+  width: fit-content;
+  max-width: 425px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  color: var(--alabaster);
+  background-color: rgb(127, 127, 127);
+}
+
+.message-content {
+  width: -webkit-fill-available;
+  border-radius: 12px;
+  padding: 14px;
+  resize: none;
+}
+
+.message-content:focus {
+  outline: 1px solid var(--dodger-blue);
+}
+
+.button:hover {
+  background-color: var(--dodger-blue);
+  color: var(--alabaster) !important;
+}
+
+.button:hover > .folder-icon {
+  filter: brightness(1000%);
+}
+
+.send {
+  align-items: center;
+  background-color: var(--dodger-blue);
+  color: var(--alabaster);
+  border: none;
+  border-radius: 12px;
+  margin-top: 20px;
+  padding: 5px 12px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}

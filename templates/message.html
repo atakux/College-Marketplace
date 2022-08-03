@@ -1,10 +1,41 @@
 {% extends "layout.html" %}
 {% block content %}
-     <h1>Messages</h1>
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/message.css') }}">
+</head>
+
+<div class="menu">
+     <h1 class="dashboard">Messages</h1>
       {% for other_user in users_list %}
         <div>
-            <h1><a href="/chat/{{other_user['important_id']}}">{{ other_user['user_name'] }}</h1>
-            <p> {{other_user['message_content']}}
+            <button class="button" onclick="location.href='/chat/{{other_user['important_id']}}'"> 
+            <h2>{{ other_user['user_name'] }} </h2>
+            <p style="font-weight: 500; margin-top: 10px;">{{ other_user['message_content'] }}</p>
+            </button>
         </div>
     {% endfor %}
+</div>
+
+<div class='container'>
+    <!--Get Messages-->
+    <div class='messages'>
+    <div style="display: flex;flex-direction: column; height: 500px; overflow: auto; ">
+    {% for message in message_list %}
+        {% if message['sender_id'] == sender['user_id'] %}
+            <p class="sent">{{message['message_content']}}</p>
+        {% else %}
+            <!-- <h1> {{receiver['user_name']}} said: </h1> -->
+            <p class="received"> {{message['message_content']}} </p>
+        {% endif %}
+    {% endfor %}
+    </div>
+
+    <form method="POST">
+        <div>
+            <textarea name="messageContent" id="message content" class="message-content" placeholder="Send a message to {{ receiver['user_name'] }}..." required></textarea>
+        </div>
+        <button class="send" type="submit" id="btn">Send</button>
+    </form>
+    </div>
+</div>
 {% endblock content %}
