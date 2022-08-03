@@ -4,7 +4,7 @@
 
 Requires git and python to run.
 ```
-git clone https://github.com/atakux/week-one-project.git
+git clone https://github.com/atakux/final_proj.git
 cd final_proj
 pip install -r requirements.txt
 ```
