@@ -290,7 +290,7 @@ def confirm_email(token):
         user_data = get_login_user_data()
         if user_data is not None:
             engine.execute("UPDATE user SET user_status = (?) WHERE user_id = (?);", (1, user_data['user_id']))
-        flash(f"Your email, '{email}', is verified !!", category="success")
+        flash(f"Your email, '{email}', is verified", category="success")
         return redirect(url_for('login'))
     except SignatureExpired:
         display_error()
