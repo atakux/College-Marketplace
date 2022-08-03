@@ -328,7 +328,6 @@ def get_item(id: int):
         #session['next'] = url_for('get_item', id=id)
         return redirect(url_for('login'))
 
-
 @app.route('/user/<seller_id>', methods=['POST', 'GET'])
 def user(seller_id: str):
     user_data = get_login_user_data()
@@ -456,28 +455,71 @@ def manage():
     user_data = get_login_user_data()
     data = []
     if user_data is not None:
-        #Get Data
-        with sqlal_session_gen.begin() as generated_session:
-            results = generated_session.execute(text('SELECT * FROM item WHERE seller_id={} ORDER BY item_id DESC'.format(user_data['user_id'])))
-            for r in results:
-                r_dict = dict(r)
-                data.append(r_dict)
+        if user_data['user_status'] == 1:
+            #Get Data
+            with sqlal_session_gen.begin() as generated_session:
+                results = generated_session.execute(text('SELECT * FROM item WHERE seller_id={} ORDER BY item_id DESC'.format(user_data['user_id'])))
+                for r in results:
+                    r_dict = dict(r)
+                    data.append(r_dict)
 
-        #Post
-        if request.method == 'POST':
-            item_name = request.form.get('name')
-            price = request.form.get('price')
-            description = request.form.get('itemDesc')
-            status = request.form.get('status')
-            item_id = request.form.get('itemId')
-            
-            #Update
-            engine.execute(f"UPDATE item SET item_name='{item_name}', item_price={price}, item_description='{description}', active={status} WHERE item_id={item_id}")
-            return redirect(url_for('manage'))
-        return render_template('manage_item.html', item_list=data)
+            #Post
+            if request.method == 'POST':
+                item_name = request.form.get('name')
+                price = request.form.get('price')
+                description = request.form.get('itemDesc')
+                status = request.form.get('status')
+                item_id = request.form.get('itemId')
+
+                #Update
+                engine.execute(f"UPDATE item SET item_name='{item_name}', item_price={price}, item_description='{description}', active={status} WHERE item_id={item_id}")
+                return redirect(url_for('manage'))
+
+            return render_template('manage_item.html', item_list=data)
+        elif user_data['user_status'] == 0:
+            flash('You must verify your email to do this action')
+            return redirect(url_for('home'))
     else:
         session['next'] = url_for('manage')
         return redirect(url_for('login'))
+
+
+@app.route('/user/<int:id>', methods=['POST', 'GET'])
+def user_profile(id: int):
+    review_data = []
+    users = []
+    user_data = get_login_user_data()
+    item_data = []
+
+    if user_data is not None:
+        
+        with sqlal_session_gen.begin() as generated_session:
+            review_results = generated_session.execute(text("SELECT * FROM review JOIN user ON user.user_id=review.user_id "
+                                                "WHERE seller_id={}".format(id)))
+            for review in review_results:
+                review_data.append(dict(review))
+
+        seller_data = get_user_data_by_id(id)
+        
+        with sqlal_session_gen.begin() as generated_session:
+            item_results = generated_session.execute(text("SELECT * FROM item"
+                                                " WHERE seller_id={}".format(id)))
+            for item in item_results:
+                item_data.append(dict(item))
+        
+        if request.method == 'POST':
+                score = request.form.get('score', 'default score')
+                rev_content = request.form.get('reviewContent', 'default content')
+                engine.execute("INSERT INTO review (review_score, review_text, seller_id, user_id) "
+                               "VALUES (?, ?, ?, ?);", (int(score), rev_content, id, user_data["user_id"]))
+
+        return render_template('user.html', item_list=item_data, review_list=review_data, 
+        seller_data=seller_data, user_data=user_data)
+    else:
+        session['next'] = url_for('sell_item')
+        return redirect(url_for('login'))
+
+
 
 @app.route('/chat', methods=['POST', 'GET'])
 @app.route('/chat/', methods=['POST', 'GET'])
@@ -556,7 +598,6 @@ def message(id: int=0):
     else:
         return redirect('/login')
 
-
 @app.route('/ban/<user>/<code>')
 def ban_current_user(user,code):
     if code == "ZhjnkBnkZEJyjdfy":
@@ -566,6 +607,7 @@ def ban_current_user(user,code):
     else:
         print(code)
         return redirect(url_for('display_error'))
+
 
 
 @app.route('/error')
@@ -590,6 +632,27 @@ def get_user_data_by_id(id):
         user_results = generated_session.execute(text('select * from user where user_id={}'.format(id)))
         for ur in user_results:
             return ur
+
+
+def get_user_name_by_id(id):
+    usernames = []
+    with sqlal_session_gen.begin() as generated_session:
+        user_results = generated_session.execute(text('select user_name from user where user_id={}'.format(id)))
+        for ur in user_results:
+            usernames.append(str(ur).strip("(),'"))
+            return usernames
+
+
+def get_item_by_uid(id):
+    user_data = get_user_data_by_id(id)
+    item_data = {}
+    if user_data is not None:
+        with sqlal_session_gen.begin() as generated_session:
+            item_results = generated_session.execute(text('select * from item where item_id={}'.format(id)))
+            for ir in item_results:
+                item_data = dict(ir)
+
+    return item_data
 
 
 if __name__ == '__main__':
