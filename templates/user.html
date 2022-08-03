@@ -89,10 +89,17 @@
         <h2>See what other users have to say about you!</h2>
         {% for review in review_list %}
             <div>
-                <div style="font-size: 18px; font-weight: 500;"> <a
-                        href="/user/{{ review['user_id'] }}">{{review['user_name']}}</a> gave this user a
-                    {{review['review_score']}}/10</div>
-                <div style="margin-bottom: 15px;"> {{review['review_text']}} </div>
+                <div style="font-size: 18px; font-weight: 500;"> 
+                    <a href="/user/{{ review['user_id'] }}">{{review['user_name']}}</a> 
+                    <div>
+                    {% for i in range(review['review_score']|round|int) %} <span class="fa fa-star checked"></span> {% endfor %}
+                    {% for i in range(5-(review['review_score']|round|int)) %} <span class="fa fa-star"></span> {% endfor %}    
+                    </div>
+                </div>
+                <div style="margin-bottom: 15px;"> 
+                    {{review['review_text']}} 
+                    <hr>
+                </div>
             </div>
         {% endfor %}
         {% if review_list|length < 1 %} 
