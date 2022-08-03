@@ -63,9 +63,56 @@
         </div>
     </div>
 </div>
-{% endif %}
+{% 
+%}
 {% endfor %}
 {% endif %}
+{% else %}
+    <br> 
+    <br>
+    <h2>See what other users have to say about you!</h2>
+    {% for review in review_list %}
+            <div>
+            <h3> <a href="/user/{{ review['user_id'] }}">{{review['user_name']}}</a> gave this user a {{review['review_score']}}/10</h3>
+            <p> {{review['review_text']}} </p>
+            </div>
+    {% endfor %}
+    <h2> Items this User has Listed </h2>
+        {% if item_list|length < 1 %}
+            <br>
+            <div style="text-align:center;">
+                <h1>No Listed Items</h1>
+            </div>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+        {% else %}
+            {% for item in item_list %}
+                {% if item['active'] == 1 %}
+                    <a href="/item/{{ item['item_id'] }}"><img src="{{ url_for('static', filename='images/' + item['item_id']|string + '.png') }}" class="center" style="max-width: 320px; max-height: 180px;"></a>
+                        <div class="item-name"><a href="/item/{{ item['item_id'] }}">{{ item['item_name'] }}</a></div>
+                        <div class="price">
+                            <div>
+                                <p class="tag">Price: </p>${{ item['item_price'] }}
+                            </div>
+
+                        </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
 {% else %}
     <br> 
     <br>
