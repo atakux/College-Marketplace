@@ -33,7 +33,7 @@ if not inspector.has_table("user"):
         "`user_email` TEXT NOT NULL,"
         "`user_zip` TEXT NOT NULL,"
         "`user_password` TEXT NOT NULL,"
-        "`user_status` INTEGER NOT NULL DEFAULT 1,"
+        "`user_status` INTEGER NOT NULL DEFAULT 0,"
         "`user_score` INTEGER NOT NULL DEFAULT 0"
         ")")
 
