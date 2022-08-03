@@ -20,7 +20,6 @@ from itsdangerous import URLSafeTimedSerializer, SignatureExpired
 import json
 
 Base = declarative_base()
-
 engine = db.create_engine('sqlite:///buy_sell_database.sql')
 
 meta = MetaData()
