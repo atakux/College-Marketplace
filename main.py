@@ -328,18 +328,6 @@ def get_item(id: int):
         #session['next'] = url_for('get_item', id=id)
         return redirect(url_for('login'))
 
-@app.route('/user/<seller_id>', methods=['POST', 'GET'])
-def user(seller_id: str):
-    user_data = get_login_user_data()
-    seller_data = None
-
-    # Get Seller Data
-    seller_data = get_user_data_by_id(seller_id)
-
-    if seller_data is not None:
-        return render_template('user.html', user_data=user_data, seller=seller_data)
-    else:
-        return render_template('error.html')
 
 @app.route('/send_report/<int:id>')
 def send_report(id: int):
