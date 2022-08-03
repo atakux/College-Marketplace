@@ -2,9 +2,9 @@
 {% block content %}
     <head><link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}"></head>
     <div>
-        <br><br>
         {% with messages = get_flashed_messages() %}
             {% if messages %}
+                <br><br>
                 <div class="notification is-danger">
                     <p style='text-align: center'>{{ messages[0] }}</p>
                 </div>

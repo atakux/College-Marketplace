@@ -17,6 +17,7 @@ from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 import smtplib, ssl
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
+import json
 
 
 Base = declarative_base()
@@ -179,7 +180,9 @@ def sign_up():
             else:
                 #Send Verification Email
                 token = s.dumps(email, salt='email-confirm')
-                msg = Message('Confirm Email', sender=EMAIL_ADDRESS, recipients=[email])
+                
+                msg = Message('College Marketplace - Confirm Email', sender=EMAIL_ADDRESS, recipients=[email])
+
                 link = url_for('confirm_email', token=token, _external=True)
                 msg.body = 'Welcome to College Marketplace !! \n\n\n Click this link to verify your account: {} ' \
                         '\n\n\nThank you! \nHappy shopping,\nCollege Marketplace ' \
@@ -309,12 +312,66 @@ def get_item(id: int):
             f"https://maps.googleapis.com/maps/api/distancematrix/json?destinations={user_data['user_zip']}&origins={seller_data['user_zip']}&units=imperial&key={API_KEY}")).json()
         distance_miles = (distance_matrix['rows'][0]['elements'][0]['distance']['value']) // 1609
         return render_template('itempage.html', item=item_data, seller=seller_data, user_zip=user_place_id,
-                               seller_zip=seller_place_id, distance=distance_miles, API_KEY=API_KEY)
+                               seller_zip=seller_place_id, user_id=user_data['user_id'], distance=distance_miles, API_KEY=API_KEY)
     else:
         #session['next'] = url_for('get_item', id=id)
         return redirect(url_for('login'))
 
 
+@app.route('/send_report/<int:id>')
+def send_report(id: int):
+    user_data = get_login_user_data()
+    if user_data is not None:
+        if user_data['user_status'] == 1:
+            reported_data = get_user_data_by_id(id)
+            smtp = smtplib.SMTP('smtp.gmail.com', 587)
+            smtp.ehlo()
+            smtp.starttls()
+            msg = MIMEMultipart()
+            msg['Subject'] = "User {} has been reported!!".format(reported_data["user_name"])
+            # Login with your email and password
+            smtp.login(EMAIL_ADDRESS, EMAIL_APP_PASSWORD)
+
+            # message to be sent
+            txt = "{} has reported {}".format(user_data, reported_data)
+            msg.attach(MIMEText(txt))
+
+            # sending the mail
+            smtp.sendmail(EMAIL_ADDRESS, EMAIL_ADDRESS, msg.as_string())
+
+            # Finally, don't forget to close the connection
+            smtp.quit()
+            flash("Report Sent!")
+            return redirect(url_for('home'))
+        elif user_data['user_status'] == 0:
+            flash("You must verify your email to do this action")
+            return redirect(url_for('home'))
+    else:
+        return redirect(url_for('login'))
+
+
+@app.route('/review/<int:id>', methods=["GET", "POST"])
+def submit_review(id: int):
+    user_data = get_login_user_data()
+    if user_data is not None:
+        if user_data['user_status'] == 1:
+            connection = None
+            id_num = 0
+            if user_data is None:
+                return redirect(url_for('error'))
+            if request.method == 'POST':
+                score = request.form.get('score', 'default score')
+                rev_content = request.form.get('reviewContent', 'default content')
+                engine.execute("INSERT INTO review (review_score, review_text, seller_id, user_id) "
+                               "VALUES (?, ?, ?, ?);", (int(score), rev_content, id, user_data["user_id"]))
+            return render_template('review.html')
+        elif user_data['user_status'] == 0:
+            flash('You must verify your email to do this action')
+            return redirect(url_for('home'))
+    else:
+        session['next'] = url_for('submit_review', id=id)
+        return redirect(url_for('login'))
+        
 @app.route('/sell', methods=['POST', 'GET'])
 def sell_item():
     user_data = get_login_user_data()
@@ -328,38 +385,41 @@ def sell_item():
         return 'adding item please wait a moment'''
     if user_data is not None:
         if user_data['user_status'] == 1:
-            if request.method == 'POST':
-                # Get Data
-                item_name = request.form.get('name', 'default item name')
-                price = request.form.get('price', 'default price')
-                correct_price = "{:.2f}".format(float(price))
-                description = request.form.get('itemDesc', 'default description')
+            if not 'POST' in session:
+                if request.method == 'POST':
+                    session['POST'] = True
+                    # Get Data
+                    item_name = request.form.get('name', 'default item name')
+                    price = request.form.get('price', 'default price')
+                    correct_price = "{:.2f}".format(float(price))
+                    description = request.form.get('itemDesc', 'default description')
 
-                # Commit to Databse
-                engine.execute("INSERT INTO item (item_name, item_price, item_description, seller_id, active) "
-                               "VALUES (?, ?, ?, ?, ?);", (item_name, correct_price, description, user_data['user_id'], 1))
+                    # Commit to Databse
+                    engine.execute("INSERT INTO item (item_name, item_price, item_description, seller_id, active) "
+                                "VALUES (?, ?, ?, ?, ?);", (item_name, correct_price, description, user_data['user_id'], 1))
 
-                id_num = 0
-                try:
-                    connection = engine.connect()
-                    cursor = connection.execute("SELECT count(*) from item;")
-                    result = cursor.scalar()
-                    id_num = int(result)
-                except:
-                    print("something went wrong")
-                finally:
-                    if not connection.closed:
-                        cursor.close()
-                        connection.close()
+                    id_num = 0
+                    try:
+                        connection = engine.connect()
+                        cursor = connection.execute("SELECT count(*) from item;")
+                        result = cursor.scalar()
+                        id_num = int(result)
+                    except:
+                        print("something went wrong")
+                    finally:
+                        if not connection.closed:
+                            cursor.close()
+                            connection.close()
 
-                print(id_num)
+                    print(id_num)
 
-                photo = request.files['photo']
-                print(photo)
-                filename = '{}.png'.format(id_num)
+                    photo = request.files['photo']
+                    print(photo)
+                    filename = '{}.png'.format(id_num)
 
-                photo.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                return redirect(url_for('get_item', id=id_num))
+                    photo.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                    session.pop('POST')
+                    return redirect(url_for('get_item', id=id_num))
             return render_template('post_item.html')
         elif user_data['user_status'] == 0:
             flash('You must verify your email to do this action')
@@ -548,6 +608,58 @@ def message(id: int=0):
     else:
         return redirect('/login')
 
+@app.route('/chat/update/<sender_id>', methods=['GET'])
+@app.route('/chat/update/<sender_id>/', methods=['GET'])
+def update_chat(sender_id):
+    if request.method == 'GET':
+        #Get Data
+        user_data = get_user_data_by_id(sender_id)
+        users_current_sent_to_data = []
+        users_current_got_from_data = []
+        users_current_commed_with = []
+        data = []
+        with sqlal_session_gen.begin() as generated_session:
+            users_current_sent_to_results = generated_session.execute(text("SELECT receiver_id AS important_id, "
+                "max(message_id) AS message_num, message_content, user_name FROM (SELECT receiver_id, message_id, sender_id,"
+                " message_content, user_name FROM message JOIN user ON receiver_id=user_id WHERE sender_id={}) z "
+                " GROUP BY important_id "
+                "ORDER BY message_id desc".format(user_data["user_id"])))
+            for ucstr in users_current_sent_to_results:
+                users_current_sent_to_data.append(dict(ucstr))
+
+        with sqlal_session_gen.begin() as generated_session:
+            users_current_got_from_results = generated_session.execute(text("SELECT sender_id AS important_id, "
+                "max(message_id) AS message_num, message_content, user_name FROM (SELECT receiver_id, message_id, sender_id,"
+                " message_content, user_name FROM message JOIN user ON sender_id=user_id WHERE receiver_id={}) z"
+                " GROUP BY important_id "
+                "ORDER BY message_id desc".format(user_data["user_id"])))
+            for ucgfr in users_current_got_from_results:
+                users_current_got_from_data.append(dict(ucgfr))
+        
+
+        users_current_commed_with.extend(users_current_sent_to_data)
+        users_current_commed_with.extend(users_current_got_from_data)
+        data = sorted(users_current_commed_with, key=lambda x:x['message_num'], reverse=True)
+        data_dict = {}
+        dupe_indices = []
+        for index in range(len(data)):
+            if data[index]['important_id'] in data_dict.keys():
+                dupe_indices.append(index)
+            else:
+                data_dict[data[index]['important_id']] = data[index]['message_num']
+        dupe_list = reversed(dupe_indices)
+        for dupe in dupe_list:
+            data.pop(dupe)
+
+        final_data = []
+        for d in range(0, len(data)):
+            print(data[d]['message_num'])
+            final_data.append(data[d]['message_num'])
+
+        #Return
+        return json.dumps(final_data)
+
+    return "Nothing to see here"
 
 @app.route('/ban/<user>/<code>')
 def ban_current_user(user,code):
@@ -556,7 +668,6 @@ def ban_current_user(user,code):
         #engine.execute("UPDATE item SET active=0 WHERE seller_id={}".format(user)
         return redirect(url_for('logout'))
     else:
-        print(code)
         return redirect(url_for('display_error'))
 
 
