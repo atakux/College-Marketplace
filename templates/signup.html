@@ -128,18 +128,31 @@
                         </div>
                     </div>
                     <div class="input-field button">
-                        <button class="input-field button" type="submit" id="btn">Signup</button>
+                        <div><button class="input-field button" type="button" id='btn' onclick="post()">Signup</button></div>
                     </div>
                     
                     <div class="login-signup">
                         <span class="text">Already a member?
                           <a href="/login" class="text login-link">Login Here</a>
+                          <a href="/home" class="text login-link">Home Page</a>
                         </span>
+
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </body>
+
+<script>
+    function post() {
+            button = document.getElementById('btn');
+            button.disabled=true;
+            if (button.form.reportValidity()) {
+                button.form.submit(); 
+            }
+            else button.disabled=false;
+        }
+</script>
 
 </html>

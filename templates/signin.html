@@ -33,11 +33,13 @@
                         <i class="uil uil-lock icon"></i>
                     </div>
                     <div class="input-field button">
-                        <button class="input-field button" type="submit" id="btn">Login</button>
+                        <div><button class="input-field button" type="button" id='btn' onclick="post()">Login</button></div>
                     </div>
                     <div class="login-signup">
                         <span class="text">Not a member?
                           <a href="/sign_up" class="text signup-link">Signup Now</a>
+                          <br>
+                          <a href="/home" class="text login-link">Home Page</a>
                         </span>
                     </div>
                 </form>
@@ -45,5 +47,16 @@
         </div>
     </div>
 </body>
+
+<script>
+    function post() {
+            button = document.getElementById('btn');
+            button.disabled=true;
+            if (button.form.reportValidity()) {
+                button.form.submit(); 
+            }
+            else button.disabled=false;
+        }
+</script>
 
 </html>

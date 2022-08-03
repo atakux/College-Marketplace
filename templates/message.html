@@ -6,36 +6,97 @@
 
 <div class="menu">
      <h1 class="dashboard">Messages</h1>
+     <hr style="width:100%">
       {% for other_user in users_list %}
         <div>
-            <button class="button" onclick="location.href='/chat/{{other_user['important_id']}}'"> 
+            <button class="button" onclick="location.href='/chat/{{other_user['important_id']}}'" style='max-height'"> 
             <h2>{{ other_user['user_name'] }} </h2>
             <p style="font-weight: 500; margin-top: 10px;">{{ other_user['message_content'] }}</p>
             </button>
         </div>
     {% endfor %}
+
+    {% if users_list|length < 1 %}
+        <h1>No Messages</h1>
+    {% endif %}
 </div>
 
 <div class='container'>
     <!--Get Messages-->
-    <div class='messages'>
-    <div style="display: flex;flex-direction: column; height: 500px; overflow: auto; ">
-    {% for message in message_list %}
-        {% if message['sender_id'] == sender['user_id'] %}
-            <p class="sent">{{message['message_content']}}</p>
-        {% else %}
-            <!-- <h1> {{receiver['user_name']}} said: </h1> -->
-            <p class="received"> {{message['message_content']}} </p>
-        {% endif %}
-    {% endfor %}
-    </div>
-
-    <form method="POST">
-        <div>
-            <textarea name="messageContent" id="message content" class="message-content" placeholder="Send a message to {{ receiver['user_name'] }}..." required></textarea>
+    {% if receiver|length >= 1 %}
+        <div class='messages'>
+        <div id='scroll' style="display: flex;flex-direction: column; height: 500px; overflow: auto;">
+        <h2>{{ receiver['user_name'] }}</h2>
+        {% for message in message_list %}
+            {% if message['sender_id'] == sender['user_id'] %}
+                <p class="sent">{{message['message_content']}}</p>
+            {% else %}
+                <!-- <h1> {{receiver['user_name']}} said: </h1> -->
+                <p class="received"> {{message['message_content']}} </p>
+            {% endif %}
+        {% endfor %}
         </div>
-        <button class="send" type="submit" id="btn">Send</button>
-    </form>
-    </div>
+
+        <form method="POST">
+            <div>
+                <textarea name="messageContent" id="message content" class="message-content" placeholder="Send a message to {{ receiver['user_name'] }}..." required></textarea>
+            </div>
+            <div><button class="send" type="button" id="btn" onclick="post()">Send</button></div>
+        </form>
+        </div>
+    {% else %}
+        {% if users_list|length < 1 %}
+            <h1 style='text-align: center'>No Messages</h1>
+        {% else %}
+            <h1>Select Message</h1>
+        {% endif %}
+    {% endif %}
 </div>
+
+<script>
+    //Post
+    function post() {
+            button = document.getElementById('btn');
+            button.disabled=true;
+            if (button.form.reportValidity()) {
+                button.form.submit(); 
+            }
+            else button.disabled=false;
+        }
+
+    //Update Scroll on run
+    updateScroll()
+
+    //Set interval
+    setInterval(checkForMessage,3000);
+
+    function updateScroll() {
+        if (parseInt("{{receiver|length}}") >= 1){
+            let element = document.getElementById("scroll");
+            element.scrollTop = element.scrollHeight;
+        }
+    }
+
+    //Check for new messages and refresh
+    function checkForMessage() {
+        //Send get request
+        let xmlHttp = new XMLHttpRequest();
+        xmlHttp.open("GET", "/chat/update/{{sender['user_id']}}", false); // false for synchronous request
+        xmlHttp.send(null);
+        let response = xmlHttp.responseText;
+
+        current_array = {{ users_list|safe }}
+        updated_array = JSON.parse(response)
+        //console.log(updated_array)
+        //console.log(current_array)
+        //Check for refresh
+        for (let i = 0; i < updated_array.length; i++) {
+            if (updated_array.length != current_array.length || updated_array[i] != current_array[i]['message_num']) {
+                location.reload()
+                break;
+            }
+        }
+    }
+    
+</script>
 {% endblock content %}
