@@ -17,12 +17,12 @@
         {% elif search_query != None %}
             <h2 class="welcome">Showing results for "{{ search_query }}"</h2>
         {% elif user_data == None %}
-            <h1 class="welcome">Welcome to College Marketplace</h1>
+            <h1 class="welcome" style='text-align: center'>Welcome to College Marketplace</h1>
+            <h2 class="welcome" style='text-align: center; font-size: 36px;'>Connecting Students Safely</h2>
         {% else %}
             <h1 class="welcome">Welcome, {{ user_data['user_name'] }}</h1>
         {% endif %}
     </div>
-    
     <div class="item-list">
         {% for actual_item in item_list %}
             <div style="--animation-order: {{ loop.index }};" class="item reveal">

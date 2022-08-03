@@ -19,7 +19,6 @@ import smtplib, ssl
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
 import json
 
-
 Base = declarative_base()
 
 engine = db.create_engine('sqlite:///buy_sell_database.sql')
@@ -95,7 +94,7 @@ sqlal_session_gen = sessionmaker(engine)
 mail = Mail(app)
 s = URLSafeTimedSerializer('secretcode')
 
-
+"""
 # for testing
 @app.route('/<table_name>')
 def get_table_data(table_name: str):
@@ -109,6 +108,7 @@ def get_table_data(table_name: str):
         return str(data)
     except:
         return "invalid table name (probably)"
+"""
 
 
 @app.route('/', methods=['POST', 'GET'])
@@ -139,6 +139,8 @@ def sign_up():
     will need an output from the template in order to add the new user to the database
     """
     user_data = get_login_user_data()
+    if user_data == "Banned":
+        return redirect(url_for('logout'))
     if user_data is None:
         if 'next' in session:
             session.pop('next')
@@ -224,6 +226,8 @@ def confirm_email(token):
 @app.route('/login', methods=['POST', 'GET'])
 def login(next_path=None):
     user_data = get_login_user_data()
+    if user_data == "Banned":
+        return redirect(url_for('logout'))
     if user_data is None:
         if request.method == 'POST':
             email = request.form.get('email', 'default value email')
@@ -273,6 +277,8 @@ def logout():
 def search(query=""):
     #Get User Data if Logged in
     user_data = get_login_user_data()
+    if user_data == "Banned":
+        return redirect(url_for('logout'))
     #Get item data
     results = None
     data = []
@@ -295,6 +301,8 @@ def get_item(id: int):
     item_data = {}
     seller_data = {}
 
+    if user_data == "Banned":
+        return redirect(url_for('logout'))
     if user_data is not None:
         with sqlal_session_gen.begin() as generated_session:
             item_results = generated_session.execute(text('select * from item where item_id={}'.format(id)))
@@ -321,6 +329,8 @@ def get_item(id: int):
 @app.route('/review/<int:id>', methods=["GET", "POST"])
 def submit_review(id: int):
     user_data = get_login_user_data()
+    if user_data == "Banned":
+        return redirect(url_for('logout'))
     if user_data is not None:
         if user_data['user_status'] == 1:
             connection = None
@@ -352,6 +362,8 @@ def sell_item():
     if request.method == 'POST':
         user = request.form
         return 'adding item please wait a moment'''
+    if user_data == "Banned":
+        return redirect(url_for('logout'))
     if user_data is not None:
         if user_data['user_status'] == 1:
             if not 'POST' in session:
@@ -403,31 +415,29 @@ def sell_item():
 def manage():
     user_data = get_login_user_data()
     data = []
+    if user_data == "Banned":
+        return redirect(url_for('logout'))
     if user_data is not None:
-        if user_data['user_status'] == 1:
-            #Get Data
-            with sqlal_session_gen.begin() as generated_session:
-                results = generated_session.execute(text('SELECT * FROM item WHERE seller_id={} ORDER BY item_id DESC'.format(user_data['user_id'])))
-                for r in results:
-                    r_dict = dict(r)
-                    data.append(r_dict)
+        #Get Data
+        with sqlal_session_gen.begin() as generated_session:
+            results = generated_session.execute(text('SELECT * FROM item WHERE seller_id={} ORDER BY item_id DESC'.format(user_data['user_id'])))
+            for r in results:
+                r_dict = dict(r)
+                data.append(r_dict)
 
-            #Post
-            if request.method == 'POST':
-                item_name = request.form.get('name')
-                price = request.form.get('price')
-                description = request.form.get('itemDesc')
-                status = request.form.get('status')
-                item_id = request.form.get('itemId')
+        #Post
+        if request.method == 'POST':
+            item_name = request.form.get('name')
+            price = request.form.get('price')
+            description = request.form.get('itemDesc')
+            status = request.form.get('status')
+            item_id = request.form.get('itemId')
 
-                #Update
-                engine.execute(f"UPDATE item SET item_name='{item_name}', item_price={price}, item_description='{description}', active={status} WHERE item_id={item_id}")
-                return redirect(url_for('manage'))
+            #Update
+            engine.execute(f"UPDATE item SET item_name='{item_name}', item_price={price}, item_description='{description}', active={status} WHERE item_id={item_id}")
+            return redirect(url_for('manage'))
 
-            return render_template('manage_item.html', item_list=data)
-        elif user_data['user_status'] == 0:
-            flash('You must verify your email to do this action!')
-            return redirect(url_for('home'))
+        return render_template('manage_item.html', item_list=data)
     else:
         session['next'] = url_for('manage')
         flash("You must Login to view this page")
@@ -441,6 +451,8 @@ def user_profile(id: int):
     user_data = get_login_user_data()
     item_data = []
 
+    if user_data == "Banned":
+        return redirect(url_for('logout'))
     if user_data is not None:
         
         with sqlal_session_gen.begin() as generated_session:
@@ -490,6 +502,8 @@ def user_profile(id: int):
 @app.route('/send_report/<int:id>')
 def send_report(id: int):
     user_data = get_login_user_data()
+    if user_data == "Banned":
+        return redirect(url_for('logout'))
     if user_data is not None:
         if user_data['user_status'] == 1:
             reported_data = get_user_data_by_id(id)
@@ -533,6 +547,8 @@ def message(id: int=0):
     other_user_data = {}
     list_of_messages = []
     user_data = get_login_user_data()
+    if user_data == "Banned":
+        return redirect(url_for('logout'))
     if user_data is not None:
         if user_data['user_status'] == 1:
             #Left Signature
@@ -659,8 +675,8 @@ def update_chat(sender_id):
 def ban_current_user(user,code):
     if code == "ZhjnkBnkZEJyjdfy":
         engine.execute("UPDATE user SET user_status=2 WHERE user_id={}".format(user))
+        return redirect(url_for('home'))
         #engine.execute("UPDATE item SET active=0 WHERE seller_id={}".format(user)
-        return redirect(url_for('logout'))
     else:
         return redirect(url_for('display_error'))
 
@@ -676,7 +692,7 @@ def get_login_user_data():
         user_data = get_user_data_by_id(session['user_id'])
         #Check for ban
         if user_data['user_status'] == 2:
-            return redirect(url_for('logout'))
+            return "Banned"
         return user_data
     except:
         return None
