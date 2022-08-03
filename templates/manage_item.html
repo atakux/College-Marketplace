@@ -8,9 +8,9 @@
                 <a href="/item/{{ actual_item['item_id'] }}"><img src="{{ url_for('static', filename='images/' + actual_item['item_id']|string + '.png') }}" class="center" style="max-width: 300px; max-height: 200px;"></a>
                 <form method="POST" enctype="multipart/form-data">
                     <input type="hidden" name="itemId" value="{{ actual_item['item_id'] }}"/>
-                    <input type="name" id="name" name="name" autocomplete="off" placeholder="Enter name" value="{{ actual_item['item_name'] }}">
-                    <input type="number" id="price" name="price" autocomplete="off" placeholder="Enter price" value="{{ actual_item['item_price'] }}">
-                    <textarea name="itemDesc" id="item description" placeholder="Item description">{{ actual_item['item_description'] }}</textarea>
+                    <input type="name" id="name" name="name" autocomplete="off" placeholder="Enter name" value="{{ actual_item['item_name'] }}" required>
+                    <input type="number" id="price" name="price" autocomplete="off" placeholder="Enter price" value="{{ actual_item['item_price'] }}" required>
+                    <textarea name="itemDesc" id="item description" placeholder="Item description" required>{{ actual_item['item_description'] }}</textarea>
                     <select name="status" id="status">
                         {% if actual_item['active'] == 1 %}
                             <option value=1 selected>Active</option>
@@ -20,7 +20,7 @@
                             <option value=0 selected>Sold</option>
                         {% endif %}
                     </select>
-                    <div><button class="delete" type="submit">Update Listing</button></div>
+                    <div><button class="delete" type="button" id='submitButton' onclick="post()">Update Listing</button></div>
                 </form>
             </div>
             {% endfor %}
@@ -49,4 +49,15 @@
             <br>
             <br>
         {% endif %}
+
+    <script>
+        function post() {
+            button = document.getElementById('submitButton');
+            button.disabled=true;
+            if (button.form.reportValidity()) {
+                button.form.submit(); 
+            }
+            else button.disabled=false;
+        }
+    </script>
 {% endblock content %}

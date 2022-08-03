@@ -14,7 +14,7 @@
   display: flex;
   font-size: 32px;
   font-weight: 600;
-  margin-bottom: 40px;
+  margin-bottom: 5px;
 }
 
 .button {
@@ -24,7 +24,9 @@
   border-radius: 12px;
   box-shadow: 3px 3px 10px #00000033;
   display: block;
-  min-height: 120px;
+  min-height: 115px;
+  max-height: 115px;
+  overflow: hidden;
   width: 300px;
   padding: 0px 23px;
   cursor: pointer;
