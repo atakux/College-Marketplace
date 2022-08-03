@@ -100,3 +100,7 @@
   width: 50%;
   margin: auto;
 }
+
+.checked {
+  color: orange;
+}

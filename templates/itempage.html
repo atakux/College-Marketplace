@@ -1,4 +1,4 @@
-{% extends "layout.html" %}
+{% extends "layout.html"%}
 {% block content %}
 <!DOCTYPE html>
 <html>
@@ -21,9 +21,9 @@
             <div class="item-name">{{ item['item_name'] }} </div>
             <div class="price"><p class="tag">Price:</p> ${{ item['item_price'] }}</div>
             {% if user_id == seller['user_id'] %}
-                <button style="font-size: 22px;" class="button" type="submit" id="btn"><a href="/manage">Edit Item</a></button>
+                <button style="font-size: 22px;" class="button" type="submit" id="btn" onclick='window.location.assign("/manage")'>Edit Item</button>
             {% elif item['active'] == 1 %}
-                <button style="font-size: 22px;" class="button" type="submit" id="btn"><a href="/chat/{{ seller['user_id'] }}">Message Seller</a></button>
+                <button style="font-size: 22px;" class="button" type="submit" id="btn" onclick='window.location.assign("/chat/{{ seller['user_id'] }}")'>Message Seller</button>
             {% else %}
                 <button style="font-size: 22px; background-color: rgba(167, 203, 250);" class="button" id="btn">Item Unavailable</button>
             {% endif %}
@@ -41,9 +41,12 @@
         </iframe>
         <div class="seller">
             <h2>Seller Information</h2>
-
+            <button style="font-size: 22px;" class="button" type="submit" id="btn" onclick='window.location.assign("/user/{{ seller['user_id'] }}")'>Seller Profile</button>
             <h3>Username: <label>{{ seller['user_name'] }}</label> </h3>
-            <!--<h3>Email: <label>{{ seller['user_email'] }}</label> </h3>-->
+            <h3>Rating: 
+                {% for i in range(seller['user_score']|round|int) %} <span class="fa fa-star checked"></span> {% endfor %}
+                {% for i in range(5-(seller['user_score']|round|int)) %} <span class="fa fa-star"></span> {% endfor %}   
+            </h3>
             {% if distance == 0 %}
                 <h3>Approximate distance: <label>Right around the corner</label> </h3>
             {% else %}
