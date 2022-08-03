@@ -13,6 +13,7 @@
         <a href="/send_report/{{ seller_data['user_id'] }}">Report User</a></button>
     <br>
 </div>
+
 <div>
     <h2> Post a Review Here! </h2>
     <form method="POST" enctype="multipart/form-data">
@@ -76,7 +77,14 @@
             {% endfor %}
         {% endif %}
 {% else %}
-    <p> It's you! </p>
-    <p> Despite everything, it's still you...</p>
+    <br> 
+    <br>
+    <h2>See what other users have to say about you!</h2>
+    {% for review in review_list %}
+            <div>
+            <h3> <a href="/user/{{ review['user_id'] }}">{{review['user_name']}}</a> gave this user a {{review['review_score']}}/10</h3>
+            <p> {{review['review_text']}} </p>
+            </div>
+    {% endfor %}
 {% endif %}
 {% endblock content %}

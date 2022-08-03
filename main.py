@@ -94,107 +94,6 @@ mail = Mail(app)
 s = URLSafeTimedSerializer('secretcode')
 
 
-@app.route('/', methods=['POST', 'GET'])
-@app.route('/home', methods=['POST', 'GET'])
-def home():
-    """
-    use render template to load the data into whatever the template is
-    This is the list of items page where each item is on display
-    """
-    # Get User Data if Logged in
-    user_data = get_login_user_data()
-
-    # Get item data
-    results = None
-    data = []
-    with sqlal_session_gen.begin() as generated_session:
-        results = generated_session.execute(text('SELECT * FROM item WHERE active=1 ORDER BY item_id DESC LIMIT 9'))
-        for r in results:
-            r_dict = dict(r)
-
-            # Get Seller Name
-            seller_data = get_user_data_by_id(r_dict['seller_id'])
-            r_dict['seller_name'] = seller_data['user_name']
-            r_dict['zip_code'] = seller_data['user_zip']
-            if seller_data['user_status'] == 1:
-                data.append(r_dict)
-            
-    return render_template('home.html', item_list=data, user_data=user_data, search_query=None)    
-
-
-@app.route('/search')
-@app.route('/search/')
-@app.route('/search/<query>')
-def search(query=""):
-    #Get User Data if Logged in
-    user_data = get_login_user_data()
-
-    #Get item data
-    results = None
-    data = []
-    with sqlal_session_gen.begin() as generated_session:
-        results = generated_session.execute(text('SELECT * FROM item WHERE active=1 ORDER BY item_id DESC'))
-        for r in results:
-            r_dict = dict(r)
-
-            #Check Query
-            if query.lower() in r_dict['item_name'].lower():
-                seller_data = get_user_data_by_id(r_dict['seller_id'])
-                r_dict['seller_name'] = seller_data['user_name']
-                r_dict['zip_code'] = seller_data['user_zip']
-                if seller_data['user_status'] == 1:
-                    data.append(r_dict)
-    
-    return render_template('home.html', item_list=data, user_data=user_data, search_query=query)    
-
-
-@app.route('/login', methods=['POST', 'GET'])
-def login(next_path=None):
-    user_data = get_login_user_data()
-
-    if user_data is None:
-        if request.method == 'POST':
-            email = request.form.get('email', 'default value email')
-            password = request.form.get('password', 'default value password')
-            try:
-                user_results = None
-                with sqlal_session_gen.begin() as generated_session:
-                    user_results = generated_session.execute(text("select * from user where user_email='{}'".format(str(email))))
-                    for r in user_results:
-                        user_data = dict(r)
-                if bcrypt.checkpw(bytes(password, encoding='utf8'), user_data['user_password']):
-                    if user_data['user_status'] == 2:
-                        redirect(url_for('login'))
-                        flash("You have been banned!", category="is-danger")
-                    else:
-                        session['user_id'] = user_data['user_id']
-                        print("successful login")
-                        if 'next' in session:
-                            url = session['next']
-                            session.pop('next')
-                            return redirect(url)
-                        else:
-                            return redirect(url_for('home'))
-                else:
-                    redirect(url_for('login'))
-                    flash("The username and/or password is incorrect, please try again.", category="is-danger")
-            except Exception as ex:
-                redirect(url_for('login'))
-                flash("The username and/or password is incorrect, please try again.", category="is-danger")
-                print("error" + str(ex))
-        return render_template('signin.html')
-    else:
-        return redirect(url_for('home'))
-
-
-@app.route('/logout')
-def logout():
-    user_data = get_login_user_data()
-    if user_data is not None:
-        session.pop('user_id')
-    return redirect(url_for('login'))
-
-
 # for testing
 @app.route('/<table_name>')
 def get_table_data(table_name: str):
@@ -209,6 +108,26 @@ def get_table_data(table_name: str):
     except:
         return "invalid table name (probably)"
 
+
+@app.route('/', methods=['POST', 'GET'])
+@app.route('/home', methods=['POST', 'GET'])
+def home():
+    """
+    use render template to load the data into whatever the template is
+    This is the list of items page where each item is on display
+    """
+    # Get User Data if Logged in
+    user_data = get_login_user_data()
+
+    # Get item data
+    results = None
+    data = []
+    with sqlal_session_gen.begin() as generated_session:
+        results = generated_session.execute(text("SELECT * FROM item JOIN user ON user_id=seller_id WHERE "
+        "active=1 AND user_status=1 ORDER BY item_id DESC LIMIT 9"))
+        for r in results:
+            data.append(dict(r))     
+    return render_template('home.html', item_list=data, user_data=user_data, search_query=None)    
 
 
 @app.route('/sign_up', methods=['POST', 'GET'])
@@ -260,7 +179,7 @@ def sign_up():
             else:
                 #Send Verification Email
                 token = s.dumps(email, salt='email-confirm')
-                msg = Message('Confirm Email.', sender=EMAIL_ADDRESS, recipients=[email])
+                msg = Message('Confirm Email', sender=EMAIL_ADDRESS, recipients=[email])
                 link = url_for('confirm_email', token=token, _external=True)
                 msg.body = 'Welcome to College Marketplace !! \n\n\n Click this link to verify your account: {} ' \
                         '\n\n\nThank you! \nHappy shopping,\nCollege Marketplace ' \
@@ -298,6 +217,74 @@ def confirm_email(token):
         return redirect(url_for('login'))
 
 
+@app.route('/login', methods=['POST', 'GET'])
+def login(next_path=None):
+    user_data = get_login_user_data()
+    if user_data is None:
+        if request.method == 'POST':
+            email = request.form.get('email', 'default value email')
+            password = request.form.get('password', 'default value password')
+            try:
+                user_results = None
+                with sqlal_session_gen.begin() as generated_session:
+                    user_results = generated_session.execute(text("select * from user where user_email='{}'".format(str(email))))
+                    for r in user_results:
+                        user_data = dict(r)
+                if bcrypt.checkpw(bytes(password, encoding='utf8'), user_data['user_password']):
+                    if user_data['user_status'] == 2:
+                        redirect(url_for('login'))
+                        flash("You have been banned!", category="is-danger")
+                    else:
+                        session['user_id'] = user_data['user_id']
+                        print("successful login")
+                        if 'next' in session:
+                            url = session['next']
+                            session.pop('next')
+                            return redirect(url)
+                        else:
+                            return redirect(url_for('home'))
+                else:
+                    redirect(url_for('login'))
+                    flash("The username and/or password is incorrect, please try again.", category="is-danger")
+            except Exception as ex:
+                redirect(url_for('login'))
+                flash("The username and/or password is incorrect, please try again.", category="is-danger")
+                print("error" + str(ex))
+        return render_template('signin.html')
+    else:
+        return redirect(url_for('home'))
+
+
+@app.route('/logout')
+def logout():
+    user_data = get_login_user_data()
+    if user_data is not None:
+        session.pop('user_id')
+    return redirect(url_for('login'))
+
+
+@app.route('/search')
+@app.route('/search/')
+@app.route('/search/<query>')
+def search(query=""):
+    #Get User Data if Logged in
+    user_data = get_login_user_data()
+    #Get item data
+    results = None
+    data = []
+    with sqlal_session_gen.begin() as generated_session:
+        results = generated_session.execute(text("SELECT * FROM item JOIN user ON user_id=seller_id WHERE "
+        "active=1 AND user_status=1 ORDER BY item_id DESC LIMIT 9"))
+        for r in results:
+            r_dict = dict(r)
+
+            #Check Query
+            if query.lower() in r_dict['item_name'].lower():
+                data.append(r_dict)
+    
+    return render_template('home.html', item_list=data, user_data=user_data, search_query=query)
+
+
 @app.route('/item/<int:id>')
 def get_item(id: int):
     user_data = get_login_user_data()
@@ -321,78 +308,10 @@ def get_item(id: int):
         distance_matrix = (requests.get(
             f"https://maps.googleapis.com/maps/api/distancematrix/json?destinations={user_data['user_zip']}&origins={seller_data['user_zip']}&units=imperial&key={API_KEY}")).json()
         distance_miles = (distance_matrix['rows'][0]['elements'][0]['distance']['value']) // 1609
-
         return render_template('itempage.html', item=item_data, seller=seller_data, user_zip=user_place_id,
                                seller_zip=seller_place_id, distance=distance_miles, API_KEY=API_KEY)
     else:
         #session['next'] = url_for('get_item', id=id)
-        return redirect(url_for('login'))
-
-@app.route('/user/<seller_id>', methods=['POST', 'GET'])
-def user(seller_id: str):
-    user_data = get_login_user_data()
-    seller_data = None
-
-    # Get Seller Data
-    seller_data = get_user_data_by_id(seller_id)
-
-    if seller_data is not None:
-        return render_template('user.html', user_data=user_data, seller=seller_data)
-    else:
-        return render_template('error.html')
-
-@app.route('/send_report/<int:id>')
-def send_report(id: int):
-    user_data = get_login_user_data()
-    if user_data is not None:
-        if user_data['user_status'] == 1:
-            reported_data = get_user_data_by_id(id)
-            smtp = smtplib.SMTP('smtp.gmail.com', 587)
-            smtp.ehlo()
-            smtp.starttls()
-            msg = MIMEMultipart()
-            msg['Subject'] = "User {} has been reported!!".format(reported_data["user_name"])
-            # Login with your email and password
-            smtp.login(EMAIL_ADDRESS, EMAIL_APP_PASSWORD)
-
-            # message to be sent
-            txt = "{} has reported {}".format(user_data, reported_data)
-            msg.attach(MIMEText(txt))
-
-            # sending the mail
-            smtp.sendmail(EMAIL_ADDRESS, EMAIL_ADDRESS, msg.as_string())
-
-            # Finally, don't forget to close the connection
-            smtp.quit()
-            flash("Report Sent!")
-            return redirect(url_for('home'))
-        elif user_data['user_status'] == 0:
-            flash("You must verify your email to do this action")
-            return redirect(url_for('home'))
-    else:
-        return redirect(url_for('login'))
-
-
-@app.route('/review/<int:id>', methods=["GET", "POST"])
-def submit_review(id: int):
-    user_data = get_login_user_data()
-    if user_data is not None:
-        if user_data['user_status'] == 1:
-            connection = None
-            id_num = 0
-            if user_data is None:
-                return redirect(url_for('error'))
-            if request.method == 'POST':
-                score = request.form.get('score', 'default score')
-                rev_content = request.form.get('reviewContent', 'default content')
-                engine.execute("INSERT INTO review (review_score, review_text, seller_id, user_id) "
-                               "VALUES (?, ?, ?, ?);", (int(score), rev_content, id, user_data["user_id"]))
-            return render_template('review.html')
-        elif user_data['user_status'] == 0:
-            flash('You must verify your email to do this action')
-            return redirect(url_for('home'))
-    else:
-        session['next'] = url_for('submit_review', id=id)
         return redirect(url_for('login'))
 
 
@@ -520,6 +439,37 @@ def user_profile(id: int):
         return redirect(url_for('login'))
 
 
+@app.route('/send_report/<int:id>')
+def send_report(id: int):
+    user_data = get_login_user_data()
+    if user_data is not None:
+        if user_data['user_status'] == 1:
+            reported_data = get_user_data_by_id(id)
+            smtp = smtplib.SMTP('smtp.gmail.com', 587)
+            smtp.ehlo()
+            smtp.starttls()
+            msg = MIMEMultipart()
+            msg['Subject'] = "User {} has been reported!!".format(reported_data["user_name"])
+            # Login with your email and password
+            smtp.login(EMAIL_ADDRESS, EMAIL_APP_PASSWORD)
+
+            # message to be sent
+            txt = "{} has reported {}".format(user_data, reported_data)
+            msg.attach(MIMEText(txt))
+
+            # sending the mail
+            smtp.sendmail(EMAIL_ADDRESS, EMAIL_ADDRESS, msg.as_string())
+
+            # Finally, don't forget to close the connection
+            smtp.quit()
+            flash("Report Sent!")
+            return redirect(url_for('home'))
+        elif user_data['user_status'] == 0:
+            flash("You must verify your email to do this action")
+            return redirect(url_for('home'))
+    else:
+        return redirect(url_for('login'))
+
 
 @app.route('/chat', methods=['POST', 'GET'])
 @app.route('/chat/', methods=['POST', 'GET'])
@@ -598,6 +548,7 @@ def message(id: int=0):
     else:
         return redirect('/login')
 
+
 @app.route('/ban/<user>/<code>')
 def ban_current_user(user,code):
     if code == "ZhjnkBnkZEJyjdfy":
@@ -607,7 +558,6 @@ def ban_current_user(user,code):
     else:
         print(code)
         return redirect(url_for('display_error'))
-
 
 
 @app.route('/error')
@@ -632,27 +582,6 @@ def get_user_data_by_id(id):
         user_results = generated_session.execute(text('select * from user where user_id={}'.format(id)))
         for ur in user_results:
             return ur
-
-
-def get_user_name_by_id(id):
-    usernames = []
-    with sqlal_session_gen.begin() as generated_session:
-        user_results = generated_session.execute(text('select user_name from user where user_id={}'.format(id)))
-        for ur in user_results:
-            usernames.append(str(ur).strip("(),'"))
-            return usernames
-
-
-def get_item_by_uid(id):
-    user_data = get_user_data_by_id(id)
-    item_data = {}
-    if user_data is not None:
-        with sqlal_session_gen.begin() as generated_session:
-            item_results = generated_session.execute(text('select * from item where item_id={}'.format(id)))
-            for ir in item_results:
-                item_data = dict(ir)
-
-    return item_data
 
 
 if __name__ == '__main__':
