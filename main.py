@@ -603,6 +603,9 @@ def message(id: int=0):
                     for oud in other_user_results:
                         other_user_data = dict(oud)
 
+                if len(other_user_data) < 1:
+                    return redirect(url_for("message"))
+
                 #Get List of Messages
                 with sqlal_session_gen.begin() as generated_session:
                     message_results = generated_session.execute(text("select * from message where "
