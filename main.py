@@ -160,6 +160,17 @@ def sign_up():
             # Check for duplicate email/username
             dup_email = False
             dup_user_name = False
+            with engine.connect() as conn:
+                user_results = conn.execute(text('SELECT * FROM user_database WHERE user_email="{}";'.format(email)))
+                for ur in user_results:
+                    dup_email = True
+                user_results = conn.execute(text('SELECT * FROM user_database WHERE user_name="{}";'.format(user_name)))
+                for ur in user_results:
+                    dup_user_name = True
+                
+                
+
+            """
             with sqlal_session_gen.begin() as generated_session:
                 user_results = generated_session.execute('SELECT * FROM user_database WHERE user_email="{}";'.format(email))
                 for ur in user_results:
@@ -167,6 +178,7 @@ def sign_up():
                 user_results = generated_session.execute('SELECT * FROM user_database WHERE user_name="{}";'.format(user_name))
                 for ur in user_results:
                     dup_user_name = True
+            """
 
             # Check for valid zip code
             valid_zip = (requests.get(f'https://maps.googleapis.com/maps/api/geocode/json?address={address}&key={API_KEY}')).json()
