@@ -30,9 +30,9 @@ meta.reflect(bind=engine, views=True)
 inspector = db.inspect(engine)
 
 def create_tables():
-    if not inspector.has_table("user_data"):
+    if not inspector.has_table("user"):
         engine.execute(
-            "CREATE TABLE user_data ("
+            "CREATE TABLE user ("
             "user_id INTEGER NOT NULL PRIMARY KEY,"
             "user_name TEXT NOT NULL,"
             "user_email TEXT NOT NULL,"
@@ -52,7 +52,7 @@ def create_tables():
             "seller_id INTEGER NOT NULL,"
             "active INTEGER NOT NULL,"
             "FOREIGN KEY (seller_id)"
-            "   REFERENCES user_data (user_id)"
+            "   REFERENCES user (user_id)"
             ")")
 
     if not inspector.has_table("review"):
@@ -64,7 +64,7 @@ def create_tables():
             "seller_id INTEGER NOT NULL,"
             "user_id INTEGER NOT NULL,"
             "FOREIGN KEY (seller_id, user_id)"
-            "   REFERENCES user_data (user_id, user_id)"
+            "   REFERENCES user (user_id, user_id)"
             ")")
 
     if not inspector.has_table("message"):
@@ -75,7 +75,7 @@ def create_tables():
             "receiver_id INTEGER NOT NULL,"
             "message_content STRING NOT NULL,"
             "FOREIGN KEY (sender_id, receiver_id)"
-            "   REFERENCES user_data (user_id, user_id)"
+            "   REFERENCES user (user_id, user_id)"
             ")")
 
 #if DATABASE_URL == "sqlite:///buy_sell_database.sql":
@@ -132,7 +132,7 @@ def home():
     results = None
     data = []
     with sqlal_session_gen.begin() as generated_session:
-        results = generated_session.execute(text("SELECT * FROM item JOIN user_data ON user_id=seller_id WHERE "
+        results = generated_session.execute(text("SELECT * FROM item JOIN user ON user_id=seller_id WHERE "
         "active=1 AND user_status=1 ORDER BY item_id DESC LIMIT 9"))
         for r in results:
             data.append(dict(r))     
@@ -143,7 +143,7 @@ def home():
 def sign_up():
     """
     Will be using a template. Likely will not need any input
-    will need an output from the template in order to add the new user_data to the database
+    will need an output from the template in order to add the new user to the database
     """
     user_data = get_login_user_data()
     if user_data == "Banned":
@@ -160,10 +160,10 @@ def sign_up():
             dup_email = False
             dup_user_name = False
             with sqlal_session_gen.begin() as generated_session:
-                user_results = generated_session.execute(text('SELECT * FROM user_data WHERE user_email="{}"'.format(str(email))))
+                user_results = generated_session.execute(text('SELECT * FROM user WHERE user_email="{}"'.format(str(email))))
                 for ur in user_results:
                     dup_email = True
-                user_results = generated_session.execute(text('SELECT * FROM user_data WHERE user_name="{}"'.format(str(user_name))))
+                user_results = generated_session.execute(text('SELECT * FROM user WHERE user_name="{}"'.format(str(user_name))))
                 for ur in user_results:
                     dup_user_name = True
 
@@ -205,7 +205,7 @@ def sign_up():
                 salt = bcrypt.gensalt()
                 hashed_pass = bcrypt.hashpw(bytes(password, encoding='utf8'), salt)
 
-                engine.execute("INSERT INTO user_data (user_name, user_email, user_zip, "
+                engine.execute("INSERT INTO user (user_name, user_email, user_zip, "
                                "user_password) VALUES (?, ?, ?, ?);",
                                (user_name, email, address, hashed_pass))
                 flash(f'Verification Email Sent to {email}')
@@ -221,7 +221,7 @@ def confirm_email(token):
         email = s.loads(token, salt='email-confirm', max_age=3600)
         user_data = get_login_user_data()
         if user_data is not None:
-            engine.execute("UPDATE user_data SET user_status = (?) WHERE user_id = (?);", (1, user_data['user_id']))
+            engine.execute("UPDATE user SET user_status = (?) WHERE user_id = (?);", (1, user_data['user_id']))
         flash(f"Your email, '{email}', is verified", category="success")
         return redirect(url_for('login'))
     except SignatureExpired:
@@ -242,7 +242,7 @@ def login(next_path=None):
             try:
                 user_results = None
                 with sqlal_session_gen.begin() as generated_session:
-                    user_results = generated_session.execute(text("select * from user_data where user_email='{}'".format(str(email))))
+                    user_results = generated_session.execute(text("select * from user where user_email='{}'".format(str(email))))
                     for r in user_results:
                         user_data = dict(r)
                 if bcrypt.checkpw(bytes(password, encoding='utf8'), user_data['user_password']):
@@ -290,7 +290,7 @@ def search(query=""):
     results = None
     data = []
     with sqlal_session_gen.begin() as generated_session:
-        results = generated_session.execute(text("SELECT * FROM item JOIN user_data ON user_id=seller_id WHERE "
+        results = generated_session.execute(text("SELECT * FROM item JOIN user ON user_id=seller_id WHERE "
         "active=1 AND user_status=1 ORDER BY item_id DESC LIMIT 9"))
         for r in results:
             r_dict = dict(r)
@@ -463,7 +463,7 @@ def user_profile(id: int):
     if user_data is not None:
         
         with sqlal_session_gen.begin() as generated_session:
-            review_results = generated_session.execute(text("SELECT * FROM review JOIN user_data ON user_data.user_id=review.user_id "
+            review_results = generated_session.execute(text("SELECT * FROM review JOIN user ON user.user_id=review.user_id "
                                                 "WHERE seller_id={} ORDER BY review_id DESC".format(id)))
             for review in review_results:
                 review_data.append(dict(review))
@@ -494,7 +494,7 @@ def user_profile(id: int):
                     new_score += r['review_score']
                     
             new_score = round(new_score/review_count, 1)
-            engine.execute(f"UPDATE user_data SET user_score='{new_score}' WHERE user_id={id}")
+            engine.execute(f"UPDATE user SET user_score='{new_score}' WHERE user_id={id}")
 
 
             return redirect(url_for('user_profile', id=id))
@@ -562,7 +562,7 @@ def message(id: int=0):
             with sqlal_session_gen.begin() as generated_session:
                 users_current_sent_to_results = generated_session.execute(text("SELECT receiver_id AS important_id, "
                     "max(message_id) AS message_num, message_content, user_name FROM (SELECT receiver_id, message_id, sender_id,"
-                    " message_content, user_name FROM message JOIN user_data ON receiver_id=user_id WHERE sender_id={}) z "
+                    " message_content, user_name FROM message JOIN user ON receiver_id=user_id WHERE sender_id={}) z "
                     " GROUP BY important_id "
                     "ORDER BY message_id desc".format(user_data["user_id"])))
                 for ucstr in users_current_sent_to_results:
@@ -571,7 +571,7 @@ def message(id: int=0):
             with sqlal_session_gen.begin() as generated_session:
                 users_current_got_from_results = generated_session.execute(text("SELECT sender_id AS important_id, "
                     "max(message_id) AS message_num, message_content, user_name FROM (SELECT receiver_id, message_id, sender_id,"
-                    " message_content, user_name FROM message JOIN user_data ON sender_id=user_id WHERE receiver_id={}) z"
+                    " message_content, user_name FROM message JOIN user ON sender_id=user_id WHERE receiver_id={}) z"
                     " GROUP BY important_id "
                     "ORDER BY message_id desc".format(user_data["user_id"])))
                 for ucgfr in users_current_got_from_results:
@@ -599,10 +599,11 @@ def message(id: int=0):
 
                 #Get other user data
                 with sqlal_session_gen.begin() as generated_session:
-                    other_user_results = generated_session.execute(text('select * from user_data where user_id={}'.format(id)))
+                    other_user_results = generated_session.execute(text('select * from user where user_id={}'.format(id)))
                     for oud in other_user_results:
                         other_user_data = dict(oud)
 
+                #Send back if user doesn't exist
                 if len(other_user_data) < 1:
                     return redirect(url_for("message"))
 
@@ -641,7 +642,7 @@ def update_chat(sender_id):
         with sqlal_session_gen.begin() as generated_session:
             users_current_sent_to_results = generated_session.execute(text("SELECT receiver_id AS important_id, "
                 "max(message_id) AS message_num, message_content, user_name FROM (SELECT receiver_id, message_id, sender_id,"
-                " message_content, user_name FROM message JOIN user_data ON receiver_id=user_id WHERE sender_id={}) z "
+                " message_content, user_name FROM message JOIN user ON receiver_id=user_id WHERE sender_id={}) z "
                 " GROUP BY important_id "
                 "ORDER BY message_id desc".format(user_data["user_id"])))
             for ucstr in users_current_sent_to_results:
@@ -650,7 +651,7 @@ def update_chat(sender_id):
         with sqlal_session_gen.begin() as generated_session:
             users_current_got_from_results = generated_session.execute(text("SELECT sender_id AS important_id, "
                 "max(message_id) AS message_num, message_content, user_name FROM (SELECT receiver_id, message_id, sender_id,"
-                " message_content, user_name FROM message JOIN user_data ON sender_id=user_id WHERE receiver_id={}) z"
+                " message_content, user_name FROM message JOIN user ON sender_id=user_id WHERE receiver_id={}) z"
                 " GROUP BY important_id "
                 "ORDER BY message_id desc".format(user_data["user_id"])))
             for ucgfr in users_current_got_from_results:
@@ -684,7 +685,7 @@ def update_chat(sender_id):
 @app.route('/ban/<user>/<code>')
 def ban_current_user(user,code):
     if code == "ZhjnkBnkZEJyjdfy":
-        engine.execute("UPDATE user_data SET user_status=2 WHERE user_id={}".format(user))
+        engine.execute("UPDATE user SET user_status=2 WHERE user_id={}".format(user))
         return redirect(url_for('home'))
         #engine.execute("UPDATE item SET active=0 WHERE seller_id={}".format(user)
     else:
@@ -710,7 +711,7 @@ def get_login_user_data():
 
 def get_user_data_by_id(id):
     with sqlal_session_gen.begin() as generated_session:
-        user_results = generated_session.execute(text('select * from user_data where user_id={}'.format(id)))
+        user_results = generated_session.execute(text('select * from user where user_id={}'.format(id)))
         for ur in user_results:
             return ur
 
