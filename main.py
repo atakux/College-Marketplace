@@ -63,7 +63,7 @@ def create_tables():
             "review_text TEXT NOT NULL,"
             "seller_id INTEGER NOT NULL,"
             "user_id INTEGER NOT NULL,"
-            "FOREIGN KEY (user_id) REFERENCES user_database (user_id)"
+            "FOREIGN KEY (user_id) REFERENCES user_database (user_id),"
             "FOREIGN KEY (seller_id) REFERENCES user_database (user_id)"
             ")")
 
@@ -74,7 +74,7 @@ def create_tables():
             "sender_id INTEGER NOT NULL,"
             "receiver_id INTEGER NOT NULL,"
             "message_content STRING NOT NULL,"
-            "FOREIGN KEY (receiver_id) REFERENCES user_database (user_id)"
+            "FOREIGN KEY (receiver_id) REFERENCES user_database (user_id),"
             "FOREIGN KEY (sender_id) REFERENCES user_database (user_id)"
             ")")
 
