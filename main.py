@@ -28,53 +28,57 @@ engine = db.create_engine(DATABASE_URL)
 meta = MetaData()
 meta.reflect(bind=engine, views=True)
 inspector = db.inspect(engine)
-if not inspector.has_table("user"):
-    engine.execute(
-        "CREATE TABLE 'user' ("
-        "'user_id' INTEGER NOT NULL PRIMARY KEY,"
-        "'user_name' TEXT NOT NULL,"
-        "'user_email' TEXT NOT NULL,"
-        "'user_zip' TEXT NOT NULL,"
-        "'user_password' TEXT NOT NULL,"
-        "'user_status' INTEGER NOT NULL DEFAULT 0,"
-        "'user_score' INTEGER NOT NULL DEFAULT 0"
-        ")")
+if DATABASE_URL == "sqlite:///buy_sell_database.sql":
+    create_tables()
 
-if not inspector.has_table("item"):
-    engine.execute(
-        "CREATE TABLE 'item' ("
-        "'item_id' INTEGER NOT NULL PRIMARY KEY,"
-        "'item_name' TEXT NOT NULL,"
-        "'item_price' TEXT NOT NULL,"
-        "'item_description' TEXT NOT NULL,"
-        "'seller_id' INTEGER NOT NULL,"
-        "'active' INTEGER NOT NULL,"
-        "FOREIGN KEY ('seller_id')"
-        "   REFERENCES user (user_id)"
-        ")")
+def create_tables():
+    if not inspector.has_table("user"):
+        engine.execute(
+            "CREATE TABLE 'user' ("
+            "'user_id' INTEGER NOT NULL PRIMARY KEY,"
+            "'user_name' TEXT NOT NULL,"
+            "'user_email' TEXT NOT NULL,"
+            "'user_zip' TEXT NOT NULL,"
+            "'user_password' TEXT NOT NULL,"
+            "'user_status' INTEGER NOT NULL DEFAULT 0,"
+            "'user_score' INTEGER NOT NULL DEFAULT 0"
+            ")")
 
-if not inspector.has_table("review"):
-    engine.execute(
-        "CREATE TABLE 'review' ("
-        "'review_id' INTEGER NOT NULL PRIMARY KEY,"
-        "'review_score' INTEGER NOT NULL,"
-        "'review_text' TEXT NOT NULL,"
-        "'seller_id' INTEGER NOT NULL,"
-        "'user_id' INTEGER NOT NULL,"
-        "FOREIGN KEY ('seller_id', 'user_id')"
-        "   REFERENCES user (user_id, user_id)"
-        ")")
+    if not inspector.has_table("item"):
+        engine.execute(
+            "CREATE TABLE 'item' ("
+            "'item_id' INTEGER NOT NULL PRIMARY KEY,"
+            "'item_name' TEXT NOT NULL,"
+            "'item_price' TEXT NOT NULL,"
+            "'item_description' TEXT NOT NULL,"
+            "'seller_id' INTEGER NOT NULL,"
+            "'active' INTEGER NOT NULL,"
+            "FOREIGN KEY ('seller_id')"
+            "   REFERENCES user (user_id)"
+            ")")
 
-if not inspector.has_table("message"):
-    engine.execute(
-        "CREATE TABLE 'message' ("
-        "'message_id' INTEGER NOT NULL PRIMARY KEY,"
-        "'sender_id' INTEGER NOT NULL,"
-        "'receiver_id' INTEGER NOT NULL,"
-        "'message_content' STRING NOT NULL,"
-        "FOREIGN KEY ('sender_id', 'receiver_id')"
-        "   REFERENCES user (user_id, user_id)"
-        ")")
+    if not inspector.has_table("review"):
+        engine.execute(
+            "CREATE TABLE 'review' ("
+            "'review_id' INTEGER NOT NULL PRIMARY KEY,"
+            "'review_score' INTEGER NOT NULL,"
+            "'review_text' TEXT NOT NULL,"
+            "'seller_id' INTEGER NOT NULL,"
+            "'user_id' INTEGER NOT NULL,"
+            "FOREIGN KEY ('seller_id', 'user_id')"
+            "   REFERENCES user (user_id, user_id)"
+            ")")
+
+    if not inspector.has_table("message"):
+        engine.execute(
+            "CREATE TABLE 'message' ("
+            "'message_id' INTEGER NOT NULL PRIMARY KEY,"
+            "'sender_id' INTEGER NOT NULL,"
+            "'receiver_id' INTEGER NOT NULL,"
+            "'message_content' STRING NOT NULL,"
+            "FOREIGN KEY ('sender_id', 'receiver_id')"
+            "   REFERENCES user (user_id, user_id)"
+            ")")
 
 # Flask
 app = Flask(__name__)
