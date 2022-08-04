@@ -55,9 +55,9 @@ def create_tables():
             "   REFERENCES user_database (user_id)"
             ")")
 
-    if not inspector.has_table("review"):
+    if not inspector.has_table("review_database"):
         engine.execute(
-            "CREATE TABLE review ("
+            "CREATE TABLE review_database ("
             "review_id INTEGER NOT NULL PRIMARY KEY,"
             "review_score INTEGER NOT NULL,"
             "review_text TEXT NOT NULL,"
@@ -73,7 +73,7 @@ def create_tables():
             "message_id INTEGER NOT NULL PRIMARY KEY,"
             "sender_id INTEGER NOT NULL,"
             "receiver_id INTEGER NOT NULL,"
-            "message_content STRING NOT NULL,"
+            "message_content TEXT NOT NULL,"
             "FOREIGN KEY (receiver_id) REFERENCES user_database (user_id),"
             "FOREIGN KEY (sender_id) REFERENCES user_database (user_id)"
             ")")
@@ -347,7 +347,7 @@ def submit_review(id: int):
             if request.method == 'POST':
                 score = request.form.get('score', 'default score')
                 rev_content = request.form.get('reviewContent', 'default content')
-                engine.execute("INSERT INTO review (review_score, review_text, seller_id, user_id) "
+                engine.execute("INSERT INTO review_database (review_score, review_text, seller_id, user_id) "
                                "VALUES (?, ?, ?, ?);", (int(score), rev_content, id, user_data["user_id"]))
             return render_template('review.html')
         elif user_data['user_status'] == 0:
@@ -463,7 +463,7 @@ def user_profile(id: int):
     if user_data is not None:
         
         with sqlal_session_gen.begin() as generated_session:
-            review_results = generated_session.execute(text("SELECT * FROM review JOIN user_database ON user_database.user_id=review.user_id "
+            review_results = generated_session.execute(text("SELECT * FROM review_database JOIN user_database ON user_database.user_id=review_database.user_id "
                                                 "WHERE seller_id={} ORDER BY review_id DESC".format(id)))
             for review in review_results:
                 review_data.append(dict(review))
@@ -479,7 +479,7 @@ def user_profile(id: int):
         if request.method == 'POST':
             score = request.form.get('score', 'default score')
             rev_content = request.form.get('reviewContent', 'default content')
-            engine.execute("INSERT INTO review (review_score, review_text, seller_id, user_id) "
+            engine.execute("INSERT INTO review_database (review_score, review_text, seller_id, user_id) "
                             "VALUES (?, ?, ?, ?);", (int(score), rev_content, id, user_data["user_id"]))
             
             #Set Score
@@ -487,7 +487,7 @@ def user_profile(id: int):
             new_score = 0
             review_count = 0
             with sqlal_session_gen.begin() as generated_session:
-                user_reviews = generated_session.execute(text("SELECT * FROM review WHERE seller_id={}".format(id)))
+                user_reviews = generated_session.execute(text("SELECT * FROM review_database WHERE seller_id={}".format(id)))
                 for review in user_reviews:
                     r = dict(review)
                     review_count += 1
