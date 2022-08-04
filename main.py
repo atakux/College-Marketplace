@@ -20,7 +20,10 @@ from itsdangerous import URLSafeTimedSerializer, SignatureExpired
 import json
 
 Base = declarative_base()
-engine = db.create_engine(os.environ['DATABASE_URL'])
+DATABASE_URL = os.environ['DATABASE_URL']
+if DATABASE_URL != "sqlite:///buy_sell_database.sql":
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://")
+engine = db.create_engine(DATABASE_URL)
 
 meta = MetaData()
 meta.reflect(bind=engine, views=True)
