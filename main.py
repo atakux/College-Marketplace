@@ -28,8 +28,9 @@ engine = db.create_engine(DATABASE_URL)
 meta = MetaData()
 meta.reflect(bind=engine, views=True)
 inspector = db.inspect(engine)
-if DATABASE_URL == "sqlite:///buy_sell_database.sql":
-    create_tables()
+#if DATABASE_URL == "sqlite:///buy_sell_database.sql":
+create_tables()
+
 
 def create_tables():
     if not inspector.has_table("user"):
