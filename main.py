@@ -28,9 +28,6 @@ engine = db.create_engine(DATABASE_URL)
 meta = MetaData()
 meta.reflect(bind=engine, views=True)
 inspector = db.inspect(engine)
-#if DATABASE_URL == "sqlite:///buy_sell_database.sql":
-create_tables()
-
 
 def create_tables():
     if not inspector.has_table("user"):
@@ -80,6 +77,9 @@ def create_tables():
             "FOREIGN KEY ('sender_id', 'receiver_id')"
             "   REFERENCES user (user_id, user_id)"
             ")")
+
+#if DATABASE_URL == "sqlite:///buy_sell_database.sql":
+create_tables()
 
 # Flask
 app = Flask(__name__)
