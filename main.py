@@ -18,6 +18,7 @@ from email.mime.multipart import MIMEMultipart
 import smtplib, ssl
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
 import json
+from psycopg2.sql import Identifier, SQL
 
 Base = declarative_base()
 DATABASE_URL = os.environ['DATABASE_URL']
@@ -160,12 +161,10 @@ def sign_up():
             dup_email = False
             dup_user_name = False
             with sqlal_session_gen.begin() as generated_session:
-                #user_results = generated_session.execute(text('SELECT * FROM user_database WHERE user_email="{}";'.format(str(email))))
-                user_results = generated_session.execute('SELECT * FROM user_database WHERE user_email=%s', [email,])
+                user_results = generated_session.execute('SELECT * FROM user_database WHERE user_email="{}";'.format(email))
                 for ur in user_results:
                     dup_email = True
-                #user_results = generated_session.execute(text('SELECT * FROM user_database WHERE user_name="{}";'.format(str(user_name))))
-                user_results = generated_session.execute('SELECT * FROM user_database WHERE user_name=%s', [user_name,])
+                user_results = generated_session.execute('SELECT * FROM user_database WHERE user_name="{}";'.format(user_name))
                 for ur in user_results:
                     dup_user_name = True
 
