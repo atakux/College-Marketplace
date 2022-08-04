@@ -63,8 +63,8 @@ def create_tables():
             "review_text TEXT NOT NULL,"
             "seller_id INTEGER NOT NULL,"
             "user_id INTEGER NOT NULL,"
-            "FOREIGN KEY (seller_id, user_id)"
-            "   REFERENCES user_database (user_id, user_id)"
+            "FOREIGN KEY (user_id) REFERENCES user_database (user_id)"
+            "FOREIGN KEY (seller_id) REFERENCES user_database (user_id)"
             ")")
 
     if not inspector.has_table("message"):
@@ -74,8 +74,8 @@ def create_tables():
             "sender_id INTEGER NOT NULL,"
             "receiver_id INTEGER NOT NULL,"
             "message_content STRING NOT NULL,"
-            "FOREIGN KEY (sender_id, receiver_id)"
-            "   REFERENCES user_database (user_id, user_id)"
+            "FOREIGN KEY (receiver_id) REFERENCES user_database (user_id)"
+            "FOREIGN KEY (sender_id) REFERENCES user_database (user_id)"
             ")")
 
 #if DATABASE_URL == "sqlite:///buy_sell_database.sql":
