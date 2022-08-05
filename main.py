@@ -156,6 +156,8 @@ def sign_up():
             user_name = request.form.get('userName', 'default value name')
             email = request.form.get('email', 'default value email')
             address = request.form.get('address', 'default address')
+            dup_email = False
+            dup_user_name = False
 
             #Check for Duplicates
             with sqlal_session_gen.begin() as generated_session:
