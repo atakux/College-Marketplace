@@ -28,4 +28,4 @@ export EMAIL_APP_PASSWORD="EMAIL_APP_PASSWORD_VALUE"
 * Replace EMAIL_APP_PASSWORD_VALUE, with your own app password from gmail.
 
 ## Heroku Link
-https://college-marketplace.herokuapp.com/ 
+https://seo-college-marketplace.herokuapp.com/home 
