@@ -79,7 +79,6 @@ def create_tables():
             "FOREIGN KEY (sender_id) REFERENCES user_database (user_id)"
             ")")
 
-#Run Create Tables
 if DATABASE_URL == "sqlite:///buy_sell_database.sql":
     create_tables()
 
