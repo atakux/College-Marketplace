@@ -21,7 +21,7 @@ import json
 from psycopg2.sql import Identifier, SQL
 
 Base = declarative_base()
-DATABASE_URL = os.environ['DATABASE_URL']
+DATABASE_URL = os.environ['HEROKU_POSTGRESQL_COBALT_URL']
 if DATABASE_URL != "sqlite:///buy_sell_database.sql":
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://")
 engine = db.create_engine(DATABASE_URL)
