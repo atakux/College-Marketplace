@@ -21,12 +21,10 @@ import json
 from psycopg2.sql import Identifier, SQL
 
 Base = declarative_base()
-DATABASE_URL = os.environ['HEROKU_POSTGRESQL_COBALT_URL']
-engine = db.create_engine(DATABASE_URL)
-
+DATABASE_URL = os.environ['DATABASE_URL']
 if DATABASE_URL != "sqlite:///buy_sell_database.sql":
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://")
-# engine = db.create_engine(DATABASE_URL)
+engine = db.create_engine(DATABASE_URL)
 
 meta = MetaData()
 meta.reflect(bind=engine, views=True)
@@ -34,20 +32,21 @@ inspector = db.inspect(engine)
 
 def create_tables():
     if not inspector.has_table("user_database"):
-        engine.execute("CREATE TABLE user_database ("
-               "user_id SERIAL PRIMARY KEY,"
-               "user_name TEXT NOT NULL,"
-               "user_email TEXT NOT NULL,"
-               "user_zip TEXT NOT NULL,"
-               "user_password TEXT NOT NULL,"
-               "user_status INTEGER NOT NULL DEFAULT 0,"
-               "user_score INTEGER NOT NULL DEFAULT 0"
-               ")")
+        engine.execute(
+            "CREATE TABLE user_database ("
+            "user_id INTEGER NOT NULL PRIMARY KEY,"
+            "user_name TEXT NOT NULL,"
+            "user_email TEXT NOT NULL,"
+            "user_zip TEXT NOT NULL,"
+            "user_password TEXT NOT NULL,"
+            "user_status INTEGER NOT NULL DEFAULT 0,"
+            "user_score INTEGER NOT NULL DEFAULT 0"
+            ")")
 
     if not inspector.has_table("item"):
         engine.execute(
             "CREATE TABLE item ("
-            "item_id SERIAL NOT NULL PRIMARY KEY,"
+            "item_id INTEGER NOT NULL PRIMARY KEY,"
             "item_name TEXT NOT NULL,"
             "item_price TEXT NOT NULL,"
             "item_description TEXT NOT NULL,"
@@ -60,7 +59,7 @@ def create_tables():
     if not inspector.has_table("review"):
         engine.execute(
             "CREATE TABLE review ("
-            "review_id SERIAL NOT NULL PRIMARY KEY,"
+            "review_id INTEGER NOT NULL PRIMARY KEY,"
             "review_score INTEGER NOT NULL,"
             "review_text TEXT NOT NULL,"
             "seller_id INTEGER NOT NULL,"
@@ -72,7 +71,7 @@ def create_tables():
     if not inspector.has_table("message"):
         engine.execute(
             "CREATE TABLE message ("
-            "message_id SERIAL NOT NULL PRIMARY KEY,"
+            "message_id INTEGER NOT NULL PRIMARY KEY,"
             "sender_id INTEGER NOT NULL,"
             "receiver_id INTEGER NOT NULL,"
             "message_content STRING NOT NULL,"
@@ -81,7 +80,7 @@ def create_tables():
             ")")
 
 #Run Create Tables
-if DATABASE_URL == "DATABASE_URL":
+if DATABASE_URL == "sqlite:///buy_sell_database.sql":
     create_tables()
 
 # Flask
@@ -210,7 +209,7 @@ def sign_up():
                 hashed_pass = bcrypt.hashpw(bytes(password, encoding='utf8'), salt)
 
                 engine.execute("INSERT INTO user_database (user_name, user_email, user_zip, "
-                               "user_password) VALUES (%s, %s, %s, %s);",
+                               "user_password) VALUES (?, ?, ?, ?);",
                                (user_name, email, address, hashed_pass))
                 flash(f'Verification Email Sent to {email}')
                 return redirect(url_for('login'))
@@ -352,7 +351,7 @@ def submit_review(id: int):
                 score = request.form.get('score', 'default score')
                 rev_content = request.form.get('reviewContent', 'default content')
                 engine.execute("INSERT INTO review (review_score, review_text, seller_id, user_id) "
-                               "VALUES (%s, %s, %s, %s);", (int(score), rev_content, id, user_data["user_id"]))
+                               "VALUES (?, ?, ?, ?);", (int(score), rev_content, id, user_data["user_id"]))
             return render_template('review.html')
         elif user_data['user_status'] == 0:
             flash('You must verify your email to do this action!')
@@ -484,7 +483,7 @@ def user_profile(id: int):
             score = request.form.get('score', 'default score')
             rev_content = request.form.get('reviewContent', 'default content')
             engine.execute("INSERT INTO review (review_score, review_text, seller_id, user_id) "
-                            "VALUES (%s, %s, %s, %s);", (int(score), rev_content, id, user_data["user_id"]))
+                            "VALUES (?, ?, ?, ?);", (int(score), rev_content, id, user_data["user_id"]))
             
             #Set Score
             reviewed_user = get_user_data_by_id(id)
@@ -722,3 +721,4 @@ def get_user_data_by_id(id):
 
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0")
+    
