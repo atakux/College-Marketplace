@@ -1,4 +1,4 @@
-# final_proj
+# College Marketplace
 
 ## Running locally
 
